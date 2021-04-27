@@ -8,6 +8,7 @@
 package org.kde.kdeconnect.Plugins.RunCommandPlugin;
 
 import android.content.ClipboardManager;
+import android.content.DialogInterface;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,6 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Toast;
+import android.widget.EditText;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
@@ -43,6 +45,9 @@ public class RunCommandActivity extends AppCompatActivity {
     private final RunCommandPlugin.CommandsChangedCallback commandsChangedCallback = this::updateView;
     private List<CommandEntry> commandItems;
 
+    private static String passedArgs = "";
+
+
     private void updateView() {
         BackgroundService.RunWithPlugin(this, deviceId, RunCommandPlugin.class, plugin -> runOnUiThread(() -> {
             registerForContextMenu(binding.runCommandsList);
@@ -62,8 +67,19 @@ public class RunCommandActivity extends AppCompatActivity {
             ListAdapter adapter = new ListAdapter(RunCommandActivity.this, commandItems);
 
             binding.runCommandsList.setAdapter(adapter);
-            binding.runCommandsList.setOnItemClickListener((adapterView, view1, i, l) ->
-                    plugin.runCommand(commandItems.get(i).getKey()));
+            binding.runCommandsList.setOnItemClickListener((adapterView, view1, i, l) -> {
+                        String cmdKey = commandItems.get(i).getKey();
+                        String cmd = plugin.getCommand(cmdKey);
+                        Log.d("RunCommand", "Running command from ACTIVITY");
+
+                        if (ArgumentParser.hasArguments(cmd)) {
+                          ArgumentParser.getAndRunWithArgs(RunCommandActivity.this, plugin, cmdKey, cmd, null);
+                        }
+                        else {
+                          plugin.runCommand(cmdKey);
+                        }
+                    }
+                );
 
             String text = getString(R.string.addcommand_explanation);
             if (!plugin.canAddCommand()) {

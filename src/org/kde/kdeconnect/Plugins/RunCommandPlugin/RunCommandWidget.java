@@ -40,8 +40,25 @@ public class RunCommandWidget extends AppWidgetProvider {
 
                 if (plugin != null) {
                     try {
+                        String cmd = plugin.getCommand(targetCommand);
+                        Log.d("RunCommand", "Running command from WIDGET");
 
-                        plugin.runCommand(targetCommand);
+                        if (ArgumentParser.hasArguments(cmd)) {
+                          Log.d("RunCommand", "Running command with arguments");
+                          Log.d("RunCommand", "Max args: " + ArgumentParser.getMaxArg(cmd));
+                          Log.d("RunCommand", "As function: " + ArgumentParser.wrapAsFunction(cmd));
+
+                          RunCommandWidgetArgumentGetter.plugin = plugin;
+                          RunCommandWidgetArgumentGetter.cmdKey = targetCommand;
+                          RunCommandWidgetArgumentGetter.cmd = cmd;
+                          Intent dialog = new Intent(context, RunCommandWidgetArgumentGetter.class);
+                          dialog.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                          context.startActivity(dialog);
+                        }
+                        else {
+                          plugin.runCommand(targetCommand);
+                        }
+
                     } catch (Exception ex) {
                         Log.e("RunCommandWidget", "Error running command", ex);
                     }

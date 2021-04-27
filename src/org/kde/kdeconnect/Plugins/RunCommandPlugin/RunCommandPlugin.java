@@ -142,6 +142,15 @@ public class RunCommandPlugin extends Plugin {
     public void runCommand(String cmdKey) {
         NetworkPacket np = new NetworkPacket(PACKET_TYPE_RUNCOMMAND_REQUEST);
         np.set("key", cmdKey);
+        Log.d("RunCommand", "sending normal packet with cmd " + getCommand(cmdKey));
+        device.sendPacket(np);
+    }
+
+    public void runCommand(String cmdKey, String rawCommand) {
+        NetworkPacket np = new NetworkPacket(PACKET_TYPE_RUNCOMMAND_REQUEST);
+        np.set("key", cmdKey);
+        np.set("rawCommand", rawCommand);
+        Log.d("RunCommand", "sending rawCommand packet with cmd " + rawCommand);
         device.sendPacket(np);
     }
 
@@ -178,4 +187,16 @@ public class RunCommandPlugin extends Plugin {
         device.sendPacket(np);
     }
 
+    public String getCommand(String key) {
+        for (JSONObject obj : commandList) {
+            try {
+                if (obj.getString("key").equals(key))
+                    return obj.getString("command");
+             } catch (JSONException e) {
+                Log.e("RunCommand", "Error parsing JSON", e);
+            }
+        }
+
+        return "";
+    }
 }

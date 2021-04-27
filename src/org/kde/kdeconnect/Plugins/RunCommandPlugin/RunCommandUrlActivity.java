@@ -50,10 +50,22 @@ public class RunCommandUrlActivity extends AppCompatActivity {
                         error(R.string.runcommand_noruncommandplugin);
                         return;
                     }
+                    String cmdKey = uri.getPathSegments().get(1);
+                    String cmd = plugin.getCommand(cmdKey);
 
-                    plugin.runCommand(uri.getPathSegments().get(1));
+                    Log.d("RunCommand", "Running command from URIACTIVITY");
+                    if (ArgumentParser.hasArguments(cmd)) {
+                      Log.d("RunCommand", "Running command with arguments");
+                      Log.d("RunCommand", "Max args: " + ArgumentParser.getMaxArg(cmd));
+                      Log.d("RunCommand", "As a function: " + ArgumentParser.wrapAsFunction(cmd));
+
+                      ArgumentParser.getAndRunWithArgs(this, plugin, cmdKey, cmd, null);
+                    }
+                    else {
+                      plugin.runCommand(cmdKey);
+                    }
+
                     RunCommandUrlActivity.this.finish();
-
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
                         Vibrator vibrator = RunCommandUrlActivity.this.getSystemService(Vibrator.class);
                         if(vibrator != null && vibrator.hasVibrator()) {
