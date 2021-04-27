@@ -1,3 +1,6 @@
+# Hi, there!
+This and its corresponding repository for the desktop application are my forks of KDE Connect. I've incorporated certain features for personal use like running commands with arguments, etc. This is not the place for stability or reliability; these programs are guaranteed to work only in my environment. The official readme is below (except the official links to the desktop repository has been replaced with my forked version).
+
 # KDE Connect - Android app
 
 KDE Connect is a multi-platform app that allows your devices to communicate (eg: your phone and your computer).
@@ -13,11 +16,11 @@ All this without wires, over the already existing WiFi network, and using TLS en
 
 ## About this app
 
-This is a native Android port of the KDE Connect Qt app. You will find a more complete readme about KDE Connect [here](https://invent.kde.org/network/kdeconnect-kde/).
+This is a native Android port of the KDE Connect Qt app. You will find a more complete readme about KDE Connect [here](https://github.com/thechosenreader/kdeconnect-kde).
 
 ## How to install this app
 
-You can install this app from the [Play Store](https://play.google.com/store/apps/details?id=org.kde.kdeconnect_tp) as well as [F-Droid](https://f-droid.org/repository/browse/?fdid=org.kde.kdeconnect_tp). Note you will also need to install the [desktop app](https://invent.kde.org/network/kdeconnect-kde) for it to work.
+You can install this app from the [Play Store](https://play.google.com/store/apps/details?id=org.kde.kdeconnect_tp) as well as [F-Droid](https://f-droid.org/repository/browse/?fdid=org.kde.kdeconnect_tp). Note you will also need to install the [desktop app](https://github.com/thechosenreader/kdeconnect-kde) for it to work.
 
 ## Contributing
 
