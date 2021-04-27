@@ -96,7 +96,7 @@ public class ArgumentParser {
 		new AlertDialog.Builder(enclosingContext)
 				.setTitle("Arguments..")
 				.setView(input)
-				.setMessage("Add in your arguments, one per line, below..")
+				.setMessage(cmd)
 				.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
