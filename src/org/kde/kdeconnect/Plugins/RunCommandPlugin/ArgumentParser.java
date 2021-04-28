@@ -102,7 +102,7 @@ public class ArgumentParser {
 					public void onClick(DialogInterface dialog, int which) {
 						final String passedArgs = input.getText().toString();
 						new CommandRunner().runCommand(passedArgs);
-
+						dialog.dismiss();
 						if (callback != null)
 							callback.run();
 					}

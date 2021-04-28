@@ -29,6 +29,8 @@ public class FileManagerPlugin extends Plugin {
   private final ArrayList<ListingChangedCallback> callbacks = new ArrayList<>();
   private final ArrayList<FileEntry> directoryItems = new ArrayList<>();
 
+  private static String currentDirectory;
+
   interface ListingChangedCallback  {
     void update();
   }
@@ -66,13 +68,18 @@ public class FileManagerPlugin extends Plugin {
 
   @Override
   public boolean onCreate() {
-      // requestCommandList();
+      requestDirectoryListing();
       return true;
   }
 
   @Override
   public boolean onPacketReceived(NetworkPacket np) {
+    Log.d("FileManager", "Received packet!");
     if (np.has("directoryListing")) {
+
+        if (np.has("directoryPath"))
+          currentDirectory = np.getString("directoryPath");
+
         directoryListing.clear();
         try {
           directoryItems.clear();
@@ -88,7 +95,12 @@ public class FileManagerPlugin extends Plugin {
             try {
               directoryItems.add(new FileEntry(
                                 o.getString("filename"),
-                                o.getString("fileinfo"),
+                                o.getString("permissions"),
+                                o.getString("owner"),
+                                o.getString("group"),
+                                o.getLong("size"),
+                                o.getString("lastmod"),
+                                o.getBoolean("readable"),
                                 o.getString("path")
               ));
             } catch (JSONException e) {
@@ -112,6 +124,19 @@ public class FileManagerPlugin extends Plugin {
     }
 
     return false;
+  }
+
+  public void requestDirectoryListing() {
+    NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
+    np.set("requestDirectoryListing", true);
+    device.sendPacket(np);
+  }
+
+  public void requestDirectoryListing(String path) {
+    NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
+    np.set("requestDirectoryListing", true);
+    np.set("directoryPath", path);
+    device.sendPacket(np);
   }
 
   @Override

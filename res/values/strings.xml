@@ -455,4 +455,6 @@
 
     <string name="pref_plugin_filemanager">File Manager</string>
     <string name="pref_plugin_filemanager_desc">Browse your desktop filesystem</string>
+    <string name="fm_permission_denied">Permission Denied</string>
+    <string name="fm_permission_denied_desc">You do not have permission to view this item</string>
 </resources>

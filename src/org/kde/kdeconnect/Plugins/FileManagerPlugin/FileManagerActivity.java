@@ -14,7 +14,7 @@ import android.widget.AdapterView;
 // import android.widget.Toast;
 // import android.widget.EditText;
 
-// import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
@@ -35,7 +35,7 @@ import java.util.Objects;
 
 public class FileManagerActivity extends AppCompatActivity {
   private ActivityFileManagerBinding binding;
-  private List<FileEntry> directoryListing;
+  private List<FileEntry> directoryItems;
 
   private String deviceId;
 
@@ -46,28 +46,42 @@ public class FileManagerActivity extends AppCompatActivity {
 
       // TODO: i want the JSONObjects being sent to be more organized
       // this means parsing them will be slightly more complex
-      directoryListing = new ArrayList<>();
-      for (JSONObject obj : plugin.getDirectoryListing()) {
-        try {
-          directoryListing.add(new FileEntry(
-                                  obj.getString("filename"),
-                                  obj.getString("fileinfo"),
-                                  obj.getString("path")
-                                  ));
-        }
-        catch (Exception e) {
-          Log.e("FileManager", "Error parsing JSON", e);
-        }
-      }
+      directoryItems = plugin.getDirectoryItems();
+      // directoryItems = new ArrayList<>();
+      // for (JSONObject obj : plugin.getDirectoryListing()) {
+      //   try {
+      //     directoryItems.add(new FileEntry(
+      //                               obj.getString("filename"),
+      //                               obj.getString("permissions"),
+      //                               obj.getString("owner"),
+      //                               obj.getString("group"),
+      //                               obj.getLong("size"),
+      //                               obj.getString("lastmod"),
+      //                               obj.getBoolean("readable")
+      //                               obj.getString("path")
+      //                             ));
+      //   }
+      //   catch (Exception e) {
+      //     Log.e("FileManager", "Error parsing JSON", e);
+      //   }
+      // }
 
-      // probably don't need to do this, will depend on how the c++ side goes
-      // Collections.sort(directoryListing, Comparator.comparing(FileEntry::getName));
-
-      ListAdapter adapter = new ListAdapter(FileManagerActivity.this, directoryListing);
+      ListAdapter adapter = new ListAdapter(FileManagerActivity.this, directoryItems);
       binding.directoryListing.setAdapter(adapter);
+      binding.directoryListing.setOnItemClickListener((adapterView, view1, i, l) -> {
+        FileEntry selectedItem = directoryItems.get(i);
 
-      // TODO: add setOnItemClickListener voodoo here
-
+        if (!selectedItem.isReadable()) {
+          new AlertDialog.Builder(FileManagerActivity.this)
+                  .setTitle(R.string.fm_permission_denied)
+                  .setMessage(R.string.fm_permission_denied_desc)
+                  .setPositiveButton(R.string.ok, null)
+                  .show();
+        }
+        else if (selectedItem.getFileName().endsWith("/")) {
+          plugin.requestDirectoryListing(selectedItem.getAbsPath());
+        }
+      });
 
     }));
   }
