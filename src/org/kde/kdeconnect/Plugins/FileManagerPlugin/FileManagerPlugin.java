@@ -139,6 +139,13 @@ public class FileManagerPlugin extends Plugin {
     device.sendPacket(np);
   }
 
+  public void requestDownload(String path) {
+    NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
+    np.set("requestDownload", true);
+    np.set("filepath", path);
+    device.sendPacket(np);
+  }
+
   @Override
   public String[] getSupportedPacketTypes() {
       return new String[]{PACKET_TYPE_FILEMANAGER};

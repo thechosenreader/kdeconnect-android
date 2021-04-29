@@ -12,7 +12,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 // import android.widget.Toast;
-// import android.widget.EditText;
+import android.widget.EditText;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -44,28 +44,7 @@ public class FileManagerActivity extends AppCompatActivity {
     BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> runOnUiThread(() -> {
       registerForContextMenu(binding.directoryListing);
 
-      // TODO: i want the JSONObjects being sent to be more organized
-      // this means parsing them will be slightly more complex
       directoryItems = plugin.getDirectoryItems();
-      // directoryItems = new ArrayList<>();
-      // for (JSONObject obj : plugin.getDirectoryListing()) {
-      //   try {
-      //     directoryItems.add(new FileEntry(
-      //                               obj.getString("filename"),
-      //                               obj.getString("permissions"),
-      //                               obj.getString("owner"),
-      //                               obj.getString("group"),
-      //                               obj.getLong("size"),
-      //                               obj.getString("lastmod"),
-      //                               obj.getBoolean("readable")
-      //                               obj.getString("path")
-      //                             ));
-      //   }
-      //   catch (Exception e) {
-      //     Log.e("FileManager", "Error parsing JSON", e);
-      //   }
-      // }
-
       ListAdapter adapter = new ListAdapter(FileManagerActivity.this, directoryItems);
       binding.directoryListing.setAdapter(adapter);
       binding.directoryListing.setOnItemClickListener((adapterView, view1, i, l) -> {
@@ -78,13 +57,61 @@ public class FileManagerActivity extends AppCompatActivity {
                   .setPositiveButton(R.string.ok, null)
                   .show();
         }
+
         else if (selectedItem.getFileName().endsWith("/")) {
           plugin.requestDirectoryListing(selectedItem.getAbsPath());
         }
+
+        else {
+          new AlertDialog.Builder(FileManagerActivity.this)
+            .setTitle(R.string.fm_confirm_download)
+            .setMessage(FileManagerActivity.this.getResources().getString(R.string.fm_confirm_download_desc) + "\n" + selectedItem.getAbsPath())
+            .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int which) {
+                plugin.requestDownload(selectedItem.getAbsPath());
+                dialog.dismiss();
+              }
+            })
+            .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+              }
+            })
+            .show();
+
+        }
       });
+
+    binding.gotoPathButton.setOnClickListener(
+        v -> BackgroundService.RunWithPlugin(FileManagerActivity.this, deviceId, FileManagerPlugin.class, plugin2 -> {
+
+        EditText input = new EditText(FileManagerActivity.this);
+        new AlertDialog.Builder(FileManagerActivity.this)
+              .setTitle(R.string.fm_goto_path)
+              .setView(input)
+              .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                  final String inputtedPath = input.getText().toString();
+                  plugin2.requestDirectoryListing(inputtedPath);
+                  dialog.dismiss();
+                }
+              })
+              .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                  dialog.cancel();
+                }
+              })
+              .show();
+
+            }));
 
     }));
   }
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -105,14 +132,12 @@ public class FileManagerActivity extends AppCompatActivity {
   @Override
   protected void onResume() {
       super.onResume();
-
       BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.addListingChangedCallback(listingChangedCallback));
   }
 
   @Override
   protected void onPause() {
       super.onPause();
-
       BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.removeListingChangedCallback(listingChangedCallback));
   }
 

@@ -71,7 +71,6 @@ public class ArgumentParser {
 	}
 
 	public static void getAndRunWithArgs(Context enclosingContext, RunCommandPlugin plugin, String cmdKey, String cmd, Runnable callback) {
-		// final String passedArgs;
 
 		Log.d("RunCommand", "Running command with arguments");
 		Log.d("RunCommand", "Max args: " + getMaxArg(cmd));
@@ -116,8 +115,4 @@ public class ArgumentParser {
 				.show();
 	}
 
-	// public static void getAndRunWithArgs(Context enclosingContext, RunCommandPlugin plugin, String cmdKey, String cmd, Runnable callback) {
-	// 	getAndRunWithArgs(enclosingContext, plugin, cmdKey, cmd);
-	// 	callback.run();
-	// }
 }
