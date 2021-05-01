@@ -66,6 +66,10 @@ public class FileManagerPlugin extends Plugin {
     return directoryItems;
   }
 
+  public String getCurrentDirectory() {
+    return currentDirectory;
+  }
+
   @Override
   public boolean onCreate() {
       requestDirectoryListing();
@@ -141,8 +145,15 @@ public class FileManagerPlugin extends Plugin {
 
   public void requestDownload(String path) {
     NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
-    np.set("requestDownload", true);
-    np.set("filepath", path);
+    np.set("requestFileDownload", true);
+    np.set("path", path);
+    device.sendPacket(np);
+  }
+
+  public void requestDirectoryDownload(String path) {
+    NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
+    np.set("requestDirectoryDownload", true);
+    np.set("path", path);
     device.sendPacket(np);
   }
 

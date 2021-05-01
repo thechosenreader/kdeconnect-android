@@ -8,6 +8,7 @@ package org.kde.kdeconnect.UserInterface.List;
 
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
 

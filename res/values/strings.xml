@@ -460,5 +460,7 @@
     <string name="fm_confirm_download">Download file?</string>
     <string name="fm_confirm_download_desc">Are you sure you want to download this file</string>
     <string name="fm_goto_path">Goto..</string>
-    
+    <string name="fm_file_info_details">Details</string>
+    <string name="fm_directory_download_zip">Download as zip</string>
+
 </resources>
