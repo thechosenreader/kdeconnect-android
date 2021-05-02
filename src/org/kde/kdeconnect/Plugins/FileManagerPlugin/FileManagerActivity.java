@@ -171,7 +171,7 @@ public class FileManagerActivity extends AppCompatActivity {
           .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-              // plugin.requestDownload(selectedItem.getAbsPath());
+              plugin.requestDirectoryDownload(selectedItem.getAbsPath());
               dialog.dismiss();
             }
           })

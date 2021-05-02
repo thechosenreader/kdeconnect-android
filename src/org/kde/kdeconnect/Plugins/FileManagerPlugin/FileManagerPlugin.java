@@ -55,7 +55,7 @@ public class FileManagerPlugin extends Plugin {
 
   @Override
   public Drawable getIcon() {
-      return ContextCompat.getDrawable(context, R.drawable.filemanager_plugin_icon_24dp);
+      return ContextCompat.getDrawable(context, R.drawable.ic_filemanager_plugin_24dp);
   }
 
   public ArrayList<JSONObject> getDirectoryListing() {
