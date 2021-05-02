@@ -45,12 +45,18 @@ public class FileManagerActivity extends AppCompatActivity {
   private void updateView() {
     BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> runOnUiThread(() -> {
 
-      // BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class,
-        //    plugin1 -> getSupportActionBar().setTitle(String.format("%s", plugin1.getCurrentDirectory())));
+      // set toolbar title to current path
+      ((TextView) findViewById(R.id.toolbar_title)).setText(String.format("%s", plugin.getCurrentDirectory()));
 
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class,
-            plugin1 -> ((TextView) findViewById(R.id.toolbar_title)).setText(
-            String.format("%s", plugin1.getCurrentDirectory())));
+      // create Toasts for received error messages
+      ArrayList<String> errors = plugin.getErrorMessages();
+      plugin.clearErrorMessages();
+      for (String error : errors) {
+        Log.d("FileManager", "making toast for error " + error);
+        Toast toast = Toast.makeText(FileManagerActivity.this, error, Toast.LENGTH_SHORT);
+        toast.show();
+      }
+
       registerForContextMenu(binding.directoryListing);
 
       directoryItems = plugin.getDirectoryItems();
@@ -94,31 +100,6 @@ public class FileManagerActivity extends AppCompatActivity {
         }
       });
 
-    binding.gotoPathButton.setOnClickListener(
-        v -> BackgroundService.RunWithPlugin(FileManagerActivity.this, deviceId, FileManagerPlugin.class, plugin2 -> {
-
-        EditText input = new EditText(FileManagerActivity.this);
-        new AlertDialog.Builder(FileManagerActivity.this)
-              .setTitle(R.string.fm_goto_path)
-              .setView(input)
-              .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                  final String inputtedPath = input.getText().toString();
-                  plugin2.requestDirectoryListing(inputtedPath);
-                  dialog.dismiss();
-                }
-              })
-              .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                  dialog.cancel();
-                }
-              })
-              .show();
-
-            }));
-
     }));
   }
 
@@ -139,6 +120,31 @@ public class FileManagerActivity extends AppCompatActivity {
     // getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_TITLE_MULTIPLE_LINES);
 
     deviceId = getIntent().getStringExtra("deviceId");
+
+    binding.gotoPathButton.setOnClickListener(
+        v -> BackgroundService.RunWithPlugin(FileManagerActivity.this, deviceId, FileManagerPlugin.class, plugin -> {
+
+        EditText input = new EditText(FileManagerActivity.this);
+        new AlertDialog.Builder(FileManagerActivity.this)
+              .setTitle(R.string.fm_goto_path)
+              .setView(input)
+              .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                  final String inputtedPath = input.getText().toString();
+                  plugin.requestDirectoryListing(inputtedPath);
+                  dialog.dismiss();
+                }
+              })
+              .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                  dialog.cancel();
+                }
+              })
+              .show();
+
+            }));
 
     updateView();
   }

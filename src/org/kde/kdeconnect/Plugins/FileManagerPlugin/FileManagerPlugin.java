@@ -29,6 +29,7 @@ public class FileManagerPlugin extends Plugin {
   private final ArrayList<ListingChangedCallback> callbacks = new ArrayList<>();
   private final ArrayList<FileEntry> directoryItems = new ArrayList<>();
 
+  private final ArrayList<String> errorMessages = new ArrayList<>();
   private static String currentDirectory;
 
   interface ListingChangedCallback  {
@@ -66,6 +67,14 @@ public class FileManagerPlugin extends Plugin {
     return directoryItems;
   }
 
+  public ArrayList<String> getErrorMessages() {
+    return new ArrayList<>(errorMessages);
+  }
+
+  public void clearErrorMessages() {
+    errorMessages.clear();
+  }
+
   public String getCurrentDirectory() {
     return currentDirectory;
   }
@@ -78,7 +87,11 @@ public class FileManagerPlugin extends Plugin {
 
   @Override
   public boolean onPacketReceived(NetworkPacket np) {
-    Log.d("FileManager", "Received packet!");
+    if (np.has("Error")) {
+      Log.d("FileManager", "received error packet " + np.getString("Error"));
+      errorMessages.add(np.getString("Error"));
+    }
+
     if (np.has("directoryListing")) {
 
         if (np.has("directoryPath"))
