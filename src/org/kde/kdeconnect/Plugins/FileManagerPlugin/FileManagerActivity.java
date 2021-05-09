@@ -2,9 +2,9 @@
 package org.kde.kdeconnect.Plugins.FileManagerPlugin;
 
 import android.app.ActionBar;
-// import android.content.ClipboardManager;
+import android.content.ClipboardManager;
 import android.content.DialogInterface;
-// import android.os.Build;
+import android.os.Handler;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.kde.kdeconnect.Plugins.Plugin;
 import org.kde.kdeconnect.BackgroundService;
 import org.kde.kdeconnect.UserInterface.List.ListAdapter;
 import org.kde.kdeconnect.UserInterface.ThemeUtil;
@@ -38,6 +39,7 @@ import java.util.Objects;
 public class FileManagerActivity extends AppCompatActivity {
   private ActivityFileManagerBinding binding;
   private List<FileEntry> directoryItems;
+  private int lastViewedPosition;
 
   private String deviceId;
 
@@ -51,10 +53,20 @@ public class FileManagerActivity extends AppCompatActivity {
       // create Toasts for received error messages
       ArrayList<String> errors = plugin.getErrorMessages();
       plugin.clearErrorMessages();
-      for (String error : errors) {
-        Log.d("FileManager", "making toast for error " + error);
-        Toast toast = Toast.makeText(FileManagerActivity.this, error, Toast.LENGTH_SHORT);
-        toast.show();
+
+      // display all error messages
+      Handler handler = new Handler();
+      if (!errors.isEmpty())
+        Toast.makeText(FileManagerActivity.this, errors.get(0), Toast.LENGTH_SHORT).show();
+
+      for (int i = 1; i < errors.size(); i++) {
+        String error = errors.get(i);
+        handler.postDelayed(new Runnable() {
+          @Override
+          public void run() {
+            Toast.makeText(FileManagerActivity.this, error, Toast.LENGTH_SHORT).show();
+          }
+        }, Toast.LENGTH_SHORT);
       }
 
       registerForContextMenu(binding.directoryListing);
@@ -64,6 +76,7 @@ public class FileManagerActivity extends AppCompatActivity {
       binding.directoryListing.setAdapter(adapter);
 
       binding.directoryListing.setOnItemClickListener((adapterView, view1, i, l) -> {
+        updateLastViewedPosition(plugin);
         FileEntry selectedItem = directoryItems.get(i);
 
         if (!selectedItem.isReadable()) {
@@ -100,6 +113,8 @@ public class FileManagerActivity extends AppCompatActivity {
         }
       });
 
+      gotoLastPosition(plugin);
+
     }));
   }
 
@@ -123,7 +138,7 @@ public class FileManagerActivity extends AppCompatActivity {
 
     binding.gotoPathButton.setOnClickListener(
         v -> BackgroundService.RunWithPlugin(FileManagerActivity.this, deviceId, FileManagerPlugin.class, plugin -> {
-
+        updateLastViewedPosition(plugin);
         EditText input = new EditText(FileManagerActivity.this);
         new AlertDialog.Builder(FileManagerActivity.this)
               .setTitle(R.string.fm_goto_path)
@@ -153,14 +168,19 @@ public class FileManagerActivity extends AppCompatActivity {
   public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
     super.onCreateContextMenu(menu, v, menuInfo);
 
-    boolean isDirectorySelected = directoryItems.get(((AdapterView.AdapterContextMenuInfo) menuInfo).position).getFileName().endsWith("/");
-
     MenuInflater inflater = getMenuInflater();
-    inflater.inflate(isDirectorySelected ? R.menu.filemanager_context_directory : R.menu.filemanager_context_file, menu);
+    inflater.inflate(R.menu.filemanager_context, menu);
+    boolean isDirectorySelected = directoryItems.get(((AdapterView.AdapterContextMenuInfo) menuInfo).position).getFileName().endsWith("/");
+    if (isDirectorySelected) {
+      menu.findItem(R.id.directory_download_zip).setVisible(true);
+    } else {
+      menu.findItem(R.id.directory_download_zip).setVisible(false);
+    }
   }
 
   @Override
   public boolean onContextItemSelected(MenuItem item) {
+    BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> updateLastViewedPosition(plugin));
     AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
     FileEntry selectedItem = directoryItems.get(info.position);
 
@@ -173,7 +193,7 @@ public class FileManagerActivity extends AppCompatActivity {
       BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
         new AlertDialog.Builder(this)
           .setTitle(R.string.fm_confirm_download)
-          .setMessage(this.getResources().getString(R.string.fm_confirm_download_desc) + "\n" + selectedItem.getAbsPath() + ".zip")
+          .setMessage(String.format(this.getResources().getString(R.string.fm_confirm_download_desc), selectedItem.getAbsPath() + ".zip"))
           .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -191,19 +211,94 @@ public class FileManagerActivity extends AppCompatActivity {
         });
     }
 
+    else if (item.getItemId() == R.id.fm_delete) {
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
+        new AlertDialog.Builder(this)
+          .setTitle(R.string.fm_confirm_delete)
+          .setMessage(String.format(this.getResources().getString(R.string.fm_confirm_delete_desc), selectedItem.getAbsPath()))
+          .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              plugin.requestDelete(selectedItem.getAbsPath());
+              dialog.dismiss();
+            }
+          })
+          .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              dialog.cancel();
+            }
+          })
+          .show();
+      });
+    }
+
+    else if (item.getItemId() == R.id.fm_rename) {
+      final EditText input = new EditText(this);
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
+        new AlertDialog.Builder(this)
+          .setView(input)
+          .setTitle(R.string.rename)
+          .setMessage(String.format(this.getResources().getString(R.string.fm_rename_desc), selectedItem.getAbsPath()))
+          .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              plugin.requestRename(selectedItem.getAbsPath(), input.getText().toString());
+              dialog.dismiss();
+            }
+          })
+          .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              dialog.cancel();
+            }
+          })
+          .show();
+      });
+    }
+
+    else if (item.getItemId() == R.id.fm_copy_path_to_clipboard) {
+      ClipboardManager cm = ContextCompat.getSystemService(this, ClipboardManager.class);
+      cm.setText(selectedItem.getAbsPath());
+      Toast.makeText(this, "copied " + selectedItem.getAbsPath(), Toast.LENGTH_SHORT).show();
+    }
+
     return true;
   }
 
   @Override
   protected void onResume() {
       super.onResume();
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.addListingChangedCallback(listingChangedCallback));
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
+        plugin.addListingChangedCallback(listingChangedCallback);
+      });
   }
 
   @Override
   protected void onPause() {
       super.onPause();
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.removeListingChangedCallback(listingChangedCallback));
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
+        plugin.removeListingChangedCallback(listingChangedCallback);
+      });
+  }
+
+  private void updateLastViewedPosition(FileManagerPlugin plugin) {
+    int pos = binding.directoryListing.getFirstVisiblePosition();
+    plugin.setLastViewedPositionForCWD(pos);
+    Log.d("FileManagerActivity", "changed lastViewedPosition for " + plugin.getCurrentDirectory() + " to " + pos);
+  }
+
+  private void gotoLastPosition(FileManagerPlugin plugin) {
+    lastViewedPosition = plugin.getLastViewedPositionForCWD();
+    binding.directoryListing.post(new Runnable() {
+      @Override
+      public void run() {
+        binding.directoryListing.smoothScrollToPosition(lastViewedPosition);
+        binding.directoryListing.setSelection(lastViewedPosition);
+      }
+    });
+
+    Log.d("FileManagerPlugin", "scrolled to " + lastViewedPosition);
   }
 
 }

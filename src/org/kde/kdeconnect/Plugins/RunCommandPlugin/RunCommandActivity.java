@@ -138,13 +138,24 @@ public class RunCommandActivity extends AppCompatActivity {
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        CommandEntry entry = (CommandEntry) commandItems.get(info.position);
         if (item.getItemId() == R.id.copy_url_to_clipboard) {
-            CommandEntry entry = (CommandEntry) commandItems.get(info.position);
             String url = "kdeconnect://runcommand/" + deviceId + "/" + entry.getKey();
             ClipboardManager cm = ContextCompat.getSystemService(this, ClipboardManager.class);
             cm.setText(url);
             Toast toast = Toast.makeText(this, R.string.clipboard_toast, Toast.LENGTH_SHORT);
             toast.show();
+        }
+
+        else if (item.getItemId() == R.id.command_details) {
+          Toast toast = Toast.makeText(this, entry.getCommand(), Toast.LENGTH_SHORT);
+          toast.show();
+        }
+
+        else if (item.getItemId() == R.id.copy_command_to_clipboard) {
+          ClipboardManager cm = ContextCompat.getSystemService(this, ClipboardManager.class);
+          cm.setText(entry.getCommand());
+          Toast.makeText(this, R.string.clipboard_toast, Toast.LENGTH_SHORT).show();
         }
         return false;
     }

@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+      android:id="@+id/command_details"
+      android:title="@string/details" />
+
+    <item
+      android:id="@+id/copy_command_to_clipboard"
+      android:title="@string/copy_command_to_clipboard" />
+    <item
         android:id="@+id/copy_url_to_clipboard"
         android:title="@string/copy_url_to_clipboard" />
 </menu>

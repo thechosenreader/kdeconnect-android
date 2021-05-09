@@ -13,6 +13,8 @@ import org.kde.kdeconnect.Plugins.PluginFactory;
 import org.kde.kdeconnect_tp.R;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -30,6 +32,10 @@ public class FileManagerPlugin extends Plugin {
   private final ArrayList<FileEntry> directoryItems = new ArrayList<>();
 
   private final ArrayList<String> errorMessages = new ArrayList<>();
+  private final ArrayDeque<String> lastVisitedStack = new ArrayDeque<>();
+  private final HashMap<String, Integer> lastPositionsMap = new HashMap(); // default capacity 16, probably good enough right?
+
+  private int lastViewedPosition;
   private static String currentDirectory;
 
   interface ListingChangedCallback  {
@@ -79,6 +85,14 @@ public class FileManagerPlugin extends Plugin {
     return currentDirectory;
   }
 
+  public int getLastViewedPositionForCWD() {
+    return lastPositionsMap.get(currentDirectory);
+  }
+
+  public void setLastViewedPositionForCWD(int pos) {
+    lastPositionsMap.put(currentDirectory, pos);
+  }
+
   @Override
   public boolean onCreate() {
       requestDirectoryListing();
@@ -90,12 +104,23 @@ public class FileManagerPlugin extends Plugin {
     if (np.has("Error")) {
       Log.d("FileManager", "received error packet " + np.getString("Error"));
       errorMessages.add(np.getString("Error"));
+
+      for (ListingChangedCallback callback : callbacks) {
+        Log.d("FileManagerPlugin", "calling updateView for error packet");
+        callback.update();
+      }
+
+      // device.onPluginsChanged();
     }
 
     if (np.has("directoryListing")) {
-
-        if (np.has("directoryPath"))
-          currentDirectory = np.getString("directoryPath");
+        if (np.has("directoryPath")) {
+          String dirPath = np.getString("directoryPath");
+          if (!lastPositionsMap.containsKey(dirPath)) {
+            lastPositionsMap.put(dirPath, 0);
+          }
+          currentDirectory = dirPath;
+        }
 
         directoryListing.clear();
         try {
@@ -132,6 +157,7 @@ public class FileManagerPlugin extends Plugin {
         }
 
         for (ListingChangedCallback callback : callbacks) {
+          Log.d("FileManagerPlugin", "calling updateView for listing changed");
           callback.update();
         }
 
@@ -167,6 +193,21 @@ public class FileManagerPlugin extends Plugin {
     NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
     np.set("requestDirectoryDownload", true);
     np.set("path", path);
+    device.sendPacket(np);
+  }
+
+  public void requestDelete(String path) {
+    NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
+    np.set("requestDelete", true);
+    np.set("path", path);
+    device.sendPacket(np);
+  }
+
+  public void requestRename(String path, String newName) {
+    NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
+    np.set("requestRename", true);
+    np.set("path", path);
+    np.set("newname", newName);
     device.sendPacket(np);
   }
 

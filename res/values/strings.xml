@@ -338,6 +338,7 @@
 
     <string name="mpris_stop">Stop the current player</string>
     <string name="copy_url_to_clipboard">Copy URL to clipboard</string>
+    <string name="copy_command_to_clipboard">Copy command to clipboard</string>
     <string name="clipboard_toast">Copied to clipboard</string>
     <string name="runcommand_notreachable">Device is not reachable</string>
     <string name="runcommand_notpaired">Device is not paired</string>
@@ -453,14 +454,20 @@
     <string name="source_code_url" translatable="false">https://invent.kde.org/network/kdeconnect-android/</string>
     <string name="licenses">Licenses</string>
 
+    <string name="details">Details</string>
+    <string name="delete">Delete</string>
+    <string name="rename">Rename</string>
     <string name="pref_plugin_filemanager">File Manager</string>
     <string name="pref_plugin_filemanager_desc">Browse your desktop filesystem</string>
     <string name="fm_permission_denied">Permission Denied</string>
     <string name="fm_permission_denied_desc">You do not have permission to view this item</string>
     <string name="fm_confirm_download">Download file?</string>
-    <string name="fm_confirm_download_desc">Are you sure you want to download this file</string>
+    <string name="fm_confirm_download_desc">Are you sure you want to download this file?\n%s</string>
+    <string name="fm_confirm_delete">Delete?</string>
+    <string name="fm_confirm_delete_desc">Are you sure you want to delete this path?\n%s</string>
+    <string name="fm_rename_desc">Are you sure you want to rename this path?\n%s</string>
     <string name="fm_goto_path">Goto..</string>
-    <string name="fm_file_info_details">Details</string>
+    <string name="fm_copy_path">Copy full path</string>
     <string name="fm_directory_download_zip">Download as zip</string>
 
 </resources>
