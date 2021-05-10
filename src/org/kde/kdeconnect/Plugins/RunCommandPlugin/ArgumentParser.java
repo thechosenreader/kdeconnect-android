@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import org.kde.kdeconnect.Plugins.Plugin;
+import org.kde.kdeconnect.Helpers.RandomHelper;
 import org.kde.kdeconnect_tp.R;
 
 public class ArgumentParser {
@@ -36,14 +37,7 @@ public class ArgumentParser {
 	}
 
   private static String getRandomString(int length) {
-		StringBuilder sb = new StringBuilder(length);
-
-		for (int i = 0; i < length; i++) {
-			int index = (int)(alphabet.length() * Math.random());
-			sb.append(alphabet.charAt(index));
-		}
-
-		return sb.toString();
+		return RandomHelper.randomString(length);
 
 	}
 
@@ -62,7 +56,7 @@ public class ArgumentParser {
 	// user supplied arguments
 	// eg. "echo $1"  ->  "kdsakjsad() { echo $1; }; kdsakjsad "
 	public static String wrapAsFunction(String cmd) {
-		String funcName = getRandomString(15);
+		String funcName = RandomHelper.randomString(15);
 
 		if (!cmd.endsWith(";"))
 			cmd += ";";

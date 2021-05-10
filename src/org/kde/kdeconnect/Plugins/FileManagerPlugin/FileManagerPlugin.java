@@ -5,9 +5,15 @@ import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.kde.kdeconnect.NetworkPacket;
+import org.kde.kdeconnect.Helpers.RandomHelper;
+import org.kde.kdeconnect.async.BackgroundJob;
+import org.kde.kdeconnect.async.BackgroundJobHandler;
+import org.kde.kdeconnect.Plugins.SharePlugin.CompositeReceiveFileJob;
 import org.kde.kdeconnect.Plugins.Plugin;
 import org.kde.kdeconnect.Plugins.PluginFactory;
 import org.kde.kdeconnect_tp.R;
@@ -37,6 +43,21 @@ public class FileManagerPlugin extends Plugin {
 
   private int lastViewedPosition;
   private static String currentDirectory = "";
+
+  private static String lastDownloadedFile;
+  private BackgroundJobHandler backgroundJobHandler = BackgroundJobHandler.newFixedThreadPoolBackgroundJobHander(5);
+  private final BackgroundJob.Callback<Void> fileReceivedCallback = new BackgroundJob.Callback<Void>() {
+    @Override
+    public void onResult(@NonNull BackgroundJob job, Void result) {
+      Log.d("FileManagerPlugin", "fileReceivedCallback - got " + lastDownloadedFile);
+    }
+
+    @Override
+    public void onError(@NonNull BackgroundJob job, @NonNull Throwable error) {
+      Log.e("FileManagerPlugin", "error receiving file", error);
+    }
+  };
+
 
   interface ListingChangedCallback  {
     void update();
@@ -195,6 +216,15 @@ public class FileManagerPlugin extends Plugin {
         return true;
     }
 
+    if (np.has("filename")) {
+      lastDownloadedFile = np.getString("filename");
+      Log.d("FileManagerPlugin", "receiving np for " + lastDownloadedFile);
+      CompositeReceiveFileJob job = new CompositeReceiveFileJob(device, fileReceivedCallback);
+      job.addNetworkPacket(np);
+
+      backgroundJobHandler.runJob(job);
+    }
+
     return false;
   }
 
@@ -267,6 +297,14 @@ public class FileManagerPlugin extends Plugin {
   public void requestToggleHidden() {
     NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
     np.set("togglehidden", true);
+    device.sendPacket(np);
+  }
+
+  public void requestDownloadForViewing(final String cachedir, final String targetpath) {
+    NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
+    np.set("requestDownloadForViewing", true);
+    np.set("path", targetpath);
+    np.set("dest", String.format("%s/%s", cachedir, RandomHelper.randomString(15)));
     device.sendPacket(np);
   }
 

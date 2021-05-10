@@ -70,7 +70,7 @@ public class CompositeReceiveFileJob extends BackgroundJob<Device, Void> {
     private long totalPayloadSize;
     private boolean isRunning;
 
-    CompositeReceiveFileJob(Device device, BackgroundJob.Callback<Void> callBack) {
+    public CompositeReceiveFileJob(Device device, BackgroundJob.Callback<Void> callBack) {
         super(device, callBack);
 
         lock = new Object();
@@ -100,7 +100,7 @@ public class CompositeReceiveFileJob extends BackgroundJob<Device, Void> {
         }
     }
 
-    void addNetworkPacket(NetworkPacket networkPacket) {
+    public void addNetworkPacket(NetworkPacket networkPacket) {
         synchronized (lock) {
             if (!networkPacketList.contains(networkPacket)) {
                 networkPacketList.add(networkPacket);
@@ -202,14 +202,18 @@ public class CompositeReceiveFileJob extends BackgroundJob<Device, Void> {
                 receiveNotification.cancel();
                 openFile(fileDocument);
             } else {
-                //Update the notification and allow to open the file from it
-                receiveNotification.setFinished(getDevice().getContext().getResources().getQuantityString(R.plurals.received_files_title, numFiles, getDevice().getName(), numFiles));
+              receiveNotification.setFinished(getDevice().getContext().getResources().getQuantityString(R.plurals.received_files_title, numFiles, getDevice().getName(), numFiles));
+                // dont setUri for files intended for cache directory
+                if (!fileDocument.getUri().toString().startsWith(String.format("file://%s", getDevice().getContext().getCacheDir().getAbsolutePath()))) {
+                  //Update the notification and allow to open the file from it
 
-                if (totalNumFiles == 1 && fileDocument != null) {
-                    receiveNotification.setURI(fileDocument.getUri(), fileDocument.getType(), fileDocument.getName());
-                }
+                  if (totalNumFiles == 1 && fileDocument != null) {
+                      Log.d("Shareplugin", "filedocument uri=" + fileDocument.getUri());
+                      receiveNotification.setURI(fileDocument.getUri(), fileDocument.getType(), fileDocument.getName());
+                  }
 
-                receiveNotification.show();
+                  receiveNotification.show();
+                } else { receiveNotification.cancel(); }
             }
             reportResult(null);
 
@@ -244,23 +248,31 @@ public class CompositeReceiveFileJob extends BackgroundJob<Device, Void> {
 
         String filenameToUse = filename;
 
-        //We need to check for already existing files only when storing in the default path.
-        //User-defined paths use the new Storage Access Framework that already handles this.
-        //If the file should be opened immediately store it in the standard location to avoid the FileProvider trouble (See ReceiveNotification::setURI)
-        if (open || !ShareSettingsFragment.isCustomDestinationEnabled(getDevice().getContext())) {
-            final String defaultPath = ShareSettingsFragment.getDefaultDestinationDirectory().getAbsolutePath();
-            filenameToUse = FilesHelper.findNonExistingNameForNewFile(defaultPath, filenameToUse);
-            destinationFolderDocument = DocumentFile.fromFile(new File(defaultPath));
+        // abs path will be used when downloading files into cache dir
+        // for the purposes of FileManagerPlugin's view as text feature
+        if (filenameToUse.startsWith("/")) {
+          destinationFolderDocument = DocumentFile.fromFile(getDevice().getContext().getCacheDir());
         } else {
-            destinationFolderDocument = ShareSettingsFragment.getDestinationDirectory(getDevice().getContext());
+          //We need to check for already existing files only when storing in the default path.
+          //User-defined paths use the new Storage Access Framework that already handles this.
+          //If the file should be opened immediately store it in the standard location to avoid the FileProvider trouble (See ReceiveNotification::setURI)
+          if (open || !ShareSettingsFragment.isCustomDestinationEnabled(getDevice().getContext())) {
+              final String defaultPath = ShareSettingsFragment.getDefaultDestinationDirectory().getAbsolutePath();
+              filenameToUse = FilesHelper.findNonExistingNameForNewFile(defaultPath, filenameToUse);
+              destinationFolderDocument = DocumentFile.fromFile(new File(defaultPath));
+          } else {
+              destinationFolderDocument = ShareSettingsFragment.getDestinationDirectory(getDevice().getContext());
+          }
         }
+
         String displayName = FilenameUtils.getBaseName(filenameToUse);
         String mimeType = FilesHelper.getMimeTypeFromFile(filenameToUse);
 
-        if ("*/*".equals(mimeType)) {
+        if ("*/*".equals(mimeType) && !filenameToUse.startsWith("/")) {
             displayName = filenameToUse;
         }
 
+        Log.d("POOPY", String.format("basename: %s\nmimetype: %s\ndisplayname: %s", FilenameUtils.getBaseName(filenameToUse), mimeType, displayName));
         DocumentFile fileDocument = destinationFolderDocument.createFile(mimeType, displayName);
 
         if (fileDocument == null) {

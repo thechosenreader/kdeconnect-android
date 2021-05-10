@@ -477,6 +477,8 @@
     <string name="fm_runcommand_desc">Run a command in\n%s</string>
     <string name="fm_home">Home</string>
     <string name="fm_togglehidden">Toggle hidden</string>
+    <string name="fm_viewastext">View as text</string>
+
 
 
 </resources>

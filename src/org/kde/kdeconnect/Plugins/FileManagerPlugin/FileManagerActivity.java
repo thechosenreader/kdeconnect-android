@@ -100,7 +100,7 @@ public class FileManagerActivity extends AppCompatActivity {
         else {
           new AlertDialog.Builder(FileManagerActivity.this)
             .setTitle(R.string.fm_confirm_download)
-            .setMessage(FileManagerActivity.this.getResources().getString(R.string.fm_confirm_download_desc) + "\n" + selectedItem.getAbsPath())
+            .setMessage(String.format(FileManagerActivity.this.getResources().getString(R.string.fm_confirm_download_desc), selectedItem.getAbsPath()))
             .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
               @Override
               public void onClick(DialogInterface dialog, int which) {
@@ -180,6 +180,7 @@ public class FileManagerActivity extends AppCompatActivity {
     boolean isDirectorySelected = directoryItems.get(((AdapterView.AdapterContextMenuInfo) menuInfo).position).getFileName().endsWith("/");
     if (isDirectorySelected) {
       menu.findItem(R.id.directory_download_zip).setVisible(true);
+      menu.findItem(R.id.fm_view_as_text).setVisible(false);
     } else {
       menu.findItem(R.id.directory_download_zip).setVisible(false);
     }
@@ -196,6 +197,12 @@ public class FileManagerActivity extends AppCompatActivity {
       case R.id.fm_file_info_details_item:
       Toast toast = Toast.makeText(this, selectedItem.getFullInfo(), Toast.LENGTH_LONG);
       toast.show();
+      break;
+
+      case R.id.fm_view_as_text:
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
+        plugin.requestDownloadForViewing(this.getCacheDir().getAbsolutePath(), selectedItem.getAbsPath());
+      });
       break;
 
       case R.id.directory_download_zip:
