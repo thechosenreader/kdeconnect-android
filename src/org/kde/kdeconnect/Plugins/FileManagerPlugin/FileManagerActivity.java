@@ -368,6 +368,11 @@ public class FileManagerActivity extends AppCompatActivity {
       });
       return true;
 
+      case R.id.details:
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class,
+        plugin -> Toast.makeText(FileManagerActivity.this, plugin.getCWDDetails(), Toast.LENGTH_LONG).show());
+      return true;
+
       case R.id.fm_home:
       BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.requestHomeDirectoryListing());
       return true;

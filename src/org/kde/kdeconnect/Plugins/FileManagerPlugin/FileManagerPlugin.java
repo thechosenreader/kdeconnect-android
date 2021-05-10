@@ -264,6 +264,13 @@ public class FileManagerPlugin extends Plugin {
     device.sendPacket(np);
   }
 
+  public String getCWDDetails() {
+    return String.format("Count: %d\nHistory stack size: %d\nPositions cache size: %d",
+                          directoryItems.size(),
+                          lastVisitedStack.size(),
+                          lastPositionsMap.size());
+  }
+
   @Override
   public String[] getSupportedPacketTypes() {
       return new String[]{PACKET_TYPE_FILEMANAGER};
