@@ -2,6 +2,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/fm_refresh"
           android:title="@string/fm_refresh"/>
+    <item android:id="@+id/fm_togglehidden"
+          android:title="@string/fm_togglehidden"/>
     <item android:id="@+id/fm_create_directory"
           android:title="@string/fm_create_directory"/>
     <item android:id="@+id/fm_runcommand"

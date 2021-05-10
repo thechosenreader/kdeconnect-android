@@ -320,6 +320,10 @@ public class FileManagerActivity extends AppCompatActivity {
       BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.requestDirectoryListing());
       return true;
 
+      case R.id.fm_togglehidden:
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.requestToggleHidden());
+      return true;
+
       case R.id.fm_create_directory:
       BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
         new AlertDialog.Builder(this)

@@ -264,6 +264,12 @@ public class FileManagerPlugin extends Plugin {
     device.sendPacket(np);
   }
 
+  public void requestToggleHidden() {
+    NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
+    np.set("togglehidden", true);
+    device.sendPacket(np);
+  }
+
   public String getCWDDetails() {
     return String.format("Count: %d\nHistory stack size: %d\nPositions cache size: %d",
                           directoryItems.size(),
