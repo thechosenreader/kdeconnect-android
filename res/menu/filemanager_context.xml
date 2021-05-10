@@ -4,8 +4,8 @@
           android:title="@string/details"/>
     <item android:id="@+id/directory_download_zip"
           android:title="@string/fm_directory_download_zip"/>
-    <item android:id="@+id/fm_rename"
-          android:title="@string/rename" />
+    <item android:id="@+id/fm_move"
+          android:title="@string/move" />
 
     <item android:id="@+id/fm_copy_path_to_clipboard"
           android:title="@string/fm_copy_path" />

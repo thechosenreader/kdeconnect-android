@@ -456,7 +456,8 @@
 
     <string name="details">Details</string>
     <string name="delete">Delete</string>
-    <string name="rename">Rename</string>
+    <string name="move">Move to..</string>
+
     <string name="pref_plugin_filemanager">File Manager</string>
     <string name="pref_plugin_filemanager_desc">Browse your desktop filesystem</string>
     <string name="fm_permission_denied">Permission Denied</string>
@@ -469,5 +470,11 @@
     <string name="fm_goto_path">Goto..</string>
     <string name="fm_copy_path">Copy full path</string>
     <string name="fm_directory_download_zip">Download as zip</string>
+    <string name="fm_refresh">Refresh</string>
+    <string name="fm_create_directory">Create directory..</string>
+    <string name="fm_create_directory_desc">Create new directory in\n%s</string>
+    <string name="fm_runcommand">Run command..</string>
+    <string name="fm_runcommand_desc">Run a command in\n%s</string>
+
 
 </resources>

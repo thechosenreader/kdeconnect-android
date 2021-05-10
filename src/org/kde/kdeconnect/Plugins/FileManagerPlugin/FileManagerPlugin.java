@@ -86,11 +86,31 @@ public class FileManagerPlugin extends Plugin {
   }
 
   public int getLastViewedPositionForCWD() {
-    return lastPositionsMap.get(currentDirectory);
+    return lastPositionsMap.getOrDefault(currentDirectory, 0);
   }
 
   public void setLastViewedPositionForCWD(int pos) {
     lastPositionsMap.put(currentDirectory, pos);
+  }
+
+  public boolean requestPreviousOrLeave() {
+    int s = lastVisitedStack.size();
+    if (s == 1) {
+      return false;
+    }
+
+    else if (s >= 2) {
+      // this removes the cwd from the stack
+      lastVisitedStack.poll();
+      // this removes the target directory from the stack
+      // when the requested listing is received, the target dir is pushed back on
+      requestDirectoryListing(lastVisitedStack.poll());
+      return true;
+    }
+
+    // this should never be executed since the stack size should never be smaller than 1
+    Log.w("FileManagerPlugin", "executing outside if/elseif in requestPreviousOrLeave. likely a bug");
+    return false;
   }
 
   @Override
@@ -119,7 +139,16 @@ public class FileManagerPlugin extends Plugin {
           if (!lastPositionsMap.containsKey(dirPath)) {
             lastPositionsMap.put(dirPath, 0);
           }
-          currentDirectory = dirPath;
+          // do not push if dirPath is currentDirectory
+          // since unsolicited listings are possible (when deleting/renaming)
+          // not doing this can fuck up the stack
+          // when the user specifically requests the cwd (through gotoPathButton->".")
+          // it is manually put on the stack in requestDirectoryListing()
+          if (currentDirectory != dirPath) {
+            currentDirectory = dirPath;
+            Log.d("FileManagerPlugin", "pushing " + currentDirectory + " to the stack");
+            lastVisitedStack.push(currentDirectory);
+          }
         }
 
         directoryListing.clear();
@@ -175,39 +204,56 @@ public class FileManagerPlugin extends Plugin {
     device.sendPacket(np);
   }
 
-  public void requestDirectoryListing(String path) {
+  public void requestDirectoryListing(final String path) {
+    if (path == currentDirectory || path == ".")
+      lastVisitedStack.push(currentDirectory);
     NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
     np.set("requestDirectoryListing", true);
     np.set("directoryPath", path);
     device.sendPacket(np);
   }
 
-  public void requestDownload(String path) {
+  public void requestDownload(final String path) {
     NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
     np.set("requestFileDownload", true);
     np.set("path", path);
     device.sendPacket(np);
   }
 
-  public void requestDirectoryDownload(String path) {
+  public void requestDirectoryDownload(final String path) {
     NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
     np.set("requestDirectoryDownload", true);
     np.set("path", path);
     device.sendPacket(np);
   }
 
-  public void requestDelete(String path) {
+  public void requestDelete(final String path) {
     NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
     np.set("requestDelete", true);
     np.set("path", path);
     device.sendPacket(np);
   }
 
-  public void requestRename(String path, String newName) {
+  public void requestRename(final String path, final String newName) {
     NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
     np.set("requestRename", true);
     np.set("path", path);
     np.set("newname", newName);
+    device.sendPacket(np);
+  }
+
+  public void requestMakeDirectory(final String dirName) {
+    NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
+    np.set("requestMakeDirectory", true);
+    np.set("dirname", dirName);
+    device.sendPacket(np);
+  }
+
+  public void requestRunCommand(final String cmd) {
+    NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
+    np.set("requestRunCommand", true);
+    np.set("command", cmd);
+    np.set("wd", currentDirectory);
     device.sendPacket(np);
   }
 
