@@ -204,6 +204,13 @@ public class FileManagerPlugin extends Plugin {
     device.sendPacket(np);
   }
 
+  public void requestHomeDirectoryListing() {
+    NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
+    np.set("requestDirectoryListing", true);
+    np.set("home", true);
+    device.sendPacket(np);
+  }
+
   public void requestDirectoryListing(final String path) {
     if (path == currentDirectory || path == ".")
       lastVisitedStack.push(currentDirectory);

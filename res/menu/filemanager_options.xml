@@ -6,4 +6,8 @@
           android:title="@string/fm_create_directory"/>
     <item android:id="@+id/fm_runcommand"
           android:title="@string/fm_runcommand" />
+  <item android:id="@+id/details"
+        android:title="@string/details"/>
+    <item android:id="@+id/fm_home"
+          android:title="@string/fm_home"/>
 </menu>

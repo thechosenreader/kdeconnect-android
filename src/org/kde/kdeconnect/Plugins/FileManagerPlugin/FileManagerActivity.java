@@ -368,6 +368,10 @@ public class FileManagerActivity extends AppCompatActivity {
       });
       return true;
 
+      case R.id.fm_home:
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.requestHomeDirectoryListing());
+      return true;
+
       default:
       return super.onOptionsItemSelected(item);
     }
