@@ -36,7 +36,7 @@ public class FileManagerPlugin extends Plugin {
   private final HashMap<String, Integer> lastPositionsMap = new HashMap(); // default capacity 16, probably good enough right?
 
   private int lastViewedPosition;
-  private static String currentDirectory;
+  private static String currentDirectory = "";
 
   interface ListingChangedCallback  {
     void update();
@@ -144,7 +144,7 @@ public class FileManagerPlugin extends Plugin {
           // not doing this can fuck up the stack
           // when the user specifically requests the cwd (through gotoPathButton->".")
           // it is manually put on the stack in requestDirectoryListing()
-          if (currentDirectory.equals(dirPath)) {
+          if (!currentDirectory.equals(dirPath)) {
             currentDirectory = dirPath;
             Log.d("FileManagerPlugin", "pushing " + currentDirectory + " to the stack");
             lastVisitedStack.push(currentDirectory);
