@@ -144,7 +144,7 @@ public class FileManagerPlugin extends Plugin {
           // not doing this can fuck up the stack
           // when the user specifically requests the cwd (through gotoPathButton->".")
           // it is manually put on the stack in requestDirectoryListing()
-          if (currentDirectory != dirPath) {
+          if (currentDirectory.equals(dirPath)) {
             currentDirectory = dirPath;
             Log.d("FileManagerPlugin", "pushing " + currentDirectory + " to the stack");
             lastVisitedStack.push(currentDirectory);
