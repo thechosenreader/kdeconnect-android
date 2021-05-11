@@ -1,5 +1,30 @@
 # Hi, there!
-This and its corresponding repository for the desktop application are my forks of KDE Connect. I've incorporated certain features for personal use like running commands with arguments, etc. This is not the place for stability or reliability; these programs are guaranteed to work only in my environment. The official readme is below (except the official links to the desktop repository has been replaced with my forked version).
+This and its corresponding repository for the desktop application are my forks of KDE Connect. I've incorporated certain features for personal use like running commands with arguments, for example. You can find the breakdown of changes below. This is not the place for stability or reliability; these programs are guaranteed to work only in my environment. The official readme is below (except the official links to the desktop repository has been replaced with my forked version).
+
+# Changes
+Here you can find a high level overview of the changes I've made and the features I've added. For the most part, my changes have been localized to the specific plugins I've created or the specific behaviours I've modified. Here and there, there has been the need to change files beyond this, however.
+
+## Features
+- **Arguments in Run Command**
+    * commands can be run with positional arguments
+    * commands can be run with named arguments (coming soon)
+
+- **File Manager**
+    * browse files on your computer from your phone
+    * easily download files and entire directories
+    * run commands within the context of a directory
+    * move, rename, and delete files
+    * view and edit files as text (coming soon)
+
+- **Remote Desktop**
+    * coming soon
+
+- **Misc**
+    * RunCommandPlugin: have the option to view the full command (before it got cut off)
+    * RunCommandPlugin: copy the command itself instead of the uri
+    
+## Consequences
+As mentioned above, some of these changes required modifying code outside in unexpected places. Most are relatively insubstantial, like changing access modifiers. Some introduced new dependencies (libquazip). Most of the time it was just changing editing layouts, manifests, other xml files.
 
 # KDE Connect - Android app
 
