@@ -6,7 +6,7 @@ Here you can find a high level overview of the changes I've made and the feature
 
 ## Features
 - **Arguments in Run Command**
-    * commands can be run with positional arguments
+    * commands can be run with positional arguments, e.g `echo $1 $2`
     * commands can be run with named arguments (coming soon)
 
 - **File Manager**
@@ -22,7 +22,7 @@ Here you can find a high level overview of the changes I've made and the feature
 - **Misc**
     * RunCommandPlugin: have the option to view the full command (before it got cut off)
     * RunCommandPlugin: copy the command itself instead of the uri
-    
+
 ## Consequences
 As mentioned above, some of these changes required modifying code outside in unexpected places. Most are relatively insubstantial, like changing access modifiers. Some introduced new dependencies (libquazip). Most of the time it was just changing editing layouts, manifests, other xml files.
 
