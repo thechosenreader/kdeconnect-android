@@ -54,6 +54,11 @@ public class FileManagerActivity extends AppCompatActivity {
 
       // set toolbar title to current path
       currentDirectory = plugin.getCurrentDirectory();
+      if (currentDirectory.equals("")) {
+        plugin.requestDirectoryListing();
+        return;
+      }
+
       ((TextView) findViewById(R.id.toolbar_title)).setText(String.format("%s", currentDirectory));
 
       // create Toasts for received error messages

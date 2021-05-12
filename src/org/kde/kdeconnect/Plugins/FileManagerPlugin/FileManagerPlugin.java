@@ -21,12 +21,20 @@ import org.kde.kdeconnect.Plugins.Plugin;
 import org.kde.kdeconnect.Plugins.PluginFactory;
 import org.kde.kdeconnect_tp.R;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.IOException;
 
 import androidx.core.content.ContextCompat;
 
@@ -46,7 +54,8 @@ public class FileManagerPlugin extends Plugin {
 
   // will probably need to keep track of files to maintain the cache;
   // map to an ordered pair with time info or use something that is ordered?
-  private final HashMap<String, String> cachedFilesMap = new HashMap();
+  private HashMap<String, String> cachedFilesMap;
+  private Long maxCacheSize = 100000000L;  // 100 Mb
 
   private int lastViewedPosition;
   private static String currentDirectory = "";
@@ -76,6 +85,7 @@ public class FileManagerPlugin extends Plugin {
       Log.e("FileManagerPlugin", "error uploading file", error);
     }
   };
+
 
   interface ListingChangedCallback  {
     void update();
@@ -154,6 +164,78 @@ public class FileManagerPlugin extends Plugin {
 
   @Override
   public boolean onCreate() {
+      // context field has been defined when onCreate is called
+      File serializeDir = new File(context.getCacheDir(), "filemanager");
+      Log.d("FileManagerPlugin", "serializeDir.getAbsolutePath() = " + serializeDir.getAbsolutePath());
+      if (serializeDir.exists()) {
+        File serializedFilesCache = new File(serializeDir, "cachedFiles.ser");
+        Log.d("FileManagerPlugin", "serializedFilesCache.getAbsolutePath() = " + serializedFilesCache.getAbsolutePath());
+        if (serializedFilesCache.exists()) {
+          try {
+            FileInputStream fis = new FileInputStream(serializedFilesCache);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            cachedFilesMap = (HashMap) ois.readObject();
+            fis.close();
+            ois.close();
+
+            // cache maintenance
+            final ArrayList<Map.Entry<String, String>> cachedEntries = new ArrayList<>();
+            Set<Map.Entry<String, String>> entries = cachedFilesMap.entrySet();
+
+            Long totalSize = 0L;
+            for (Map.Entry<String, String> e : entries) {
+              File f = new File(e.getValue());
+              if (f.exists()) {
+                cachedEntries.add(e);
+                totalSize += f.length();
+              }
+            }
+
+            Collections.sort(cachedEntries, new Comparator<Map.Entry<String, String>>(){
+              public int compare(Map.Entry<String, String> a, Map.Entry<String, String> b) {
+                File fa = new File(a.getValue());
+                File fb = new File(b.getValue());
+                Long falm = fa.lastModified();
+                Long fblm = fb.lastModified();
+
+                // sort such that the last element is least recently modified
+                return (falm >= fblm) ? -1 : 1;
+              }
+            });
+
+            Log.d("FileManagerPlugin", "totalSize = " + totalSize);
+            while (totalSize > maxCacheSize) {
+              int lastIndex = cachedEntries.size() - 1;
+              // the least recently modified file
+              Map.Entry<String, String> e = cachedEntries.get(lastIndex);
+              cachedEntries.remove(lastIndex);
+              Log.d("FileManagerPlugin", String.format("deleting (%s,%s)", e.getKey(), e.getValue()));
+              File f = new File(e.getValue());
+              totalSize -= f.length();
+              f.delete();
+            }
+
+            cachedFilesMap.clear();
+            for (Map.Entry<String, String> e : cachedEntries) {
+              cachedFilesMap.put(e.getKey(), e.getValue());
+            }
+
+            serializeFilesCache();
+
+          } catch (Exception e) {
+            Log.e("FileManagerPlugin", "could not deserialize cache", e);
+            cachedFilesMap = new HashMap<>();
+          }
+
+        } else {
+          cachedFilesMap = new HashMap<>();
+        }
+
+      } else {
+        serializeDir.mkdir();
+        cachedFilesMap = new HashMap<>();
+      }
+
       requestDirectoryListing();
       return true;
   }
@@ -327,6 +409,7 @@ public class FileManagerPlugin extends Plugin {
     Log.d("FileManagerPlugin", String.format("adding (%s, %s) to cache", targetpath, dest));
     cachedFilesMap.put(targetpath, dest);
     device.sendPacket(np);
+    serializeFilesCache();
   }
 
   public void requestUpload(final String path) {
@@ -340,17 +423,40 @@ public class FileManagerPlugin extends Plugin {
   }
 
   public String getCWDDetails() {
-    return String.format("Count: %d\nHistory stack size: %d\nPositions cache size: %d\nFiles cache size: %d",
+    return String.format("Count: %d\nHistory stack size: %d\nPositions cache size: %d\nFiles cache size: %d (%dM)",
                           directoryItems.size(),
                           lastVisitedStack.size(),
                           lastPositionsMap.size(),
-                          cachedFilesMap.size());
+                          cachedFilesMap.size(),
+                          getCacheSize() / 1024 / 1024);
   }
 
   public boolean isCached(final String filename) {
     return cachedFilesMap.containsKey(filename);
   }
 
+  public void serializeFilesCache() {
+    try {
+      File serializeFile = new File(context.getCacheDir(), "filemanager/cachedFiles.ser");
+      Log.d("FileManagerPlugin", "serializing cachedFilesMap to " + serializeFile.getAbsolutePath());
+      FileOutputStream fos = new FileOutputStream(serializeFile);
+      ObjectOutputStream oos = new ObjectOutputStream(fos);
+      oos.writeObject(cachedFilesMap);
+      oos.close();
+      fos.close();
+
+    } catch (IOException ioe) {
+      Log.e("FileManagerPlugin", "error serializing cachedFilesMap", ioe);
+    }
+  }
+
+  private long getCacheSize() {
+    long total = 0L;
+    for (String cachePath : cachedFilesMap.values()) {
+      total += new File(cachePath).length();
+    }
+    return total;
+  }
 
   @Override
   public String[] getSupportedPacketTypes() {
