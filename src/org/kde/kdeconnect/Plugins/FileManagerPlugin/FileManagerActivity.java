@@ -177,13 +177,20 @@ public class FileManagerActivity extends AppCompatActivity {
 
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.filemanager_context, menu);
-    boolean isDirectorySelected = directoryItems.get(((AdapterView.AdapterContextMenuInfo) menuInfo).position).getFileName().endsWith("/");
+    String selectedPath = directoryItems.get(((AdapterView.AdapterContextMenuInfo) menuInfo).position).getAbsPath();
+    boolean isDirectorySelected = selectedPath.endsWith("/");
     if (isDirectorySelected) {
       menu.findItem(R.id.directory_download_zip).setVisible(true);
       menu.findItem(R.id.fm_view_as_text).setVisible(false);
     } else {
       menu.findItem(R.id.directory_download_zip).setVisible(false);
     }
+
+    boolean isCached = BackgroundService.getInstance().getDevice(deviceId).getPlugin(FileManagerPlugin.class).isCached(selectedPath);
+    if (!isCached) {
+      Log.d("FileManagerActivity", selectedPath + " is not cached");
+      menu.findItem(R.id.fm_upload).setVisible(false);
+    } else { Log.d("FileManagerActivity", selectedPath + " is cached"); }
   }
 
   @Override
@@ -277,6 +284,28 @@ public class FileManagerActivity extends AppCompatActivity {
       ClipboardManager cm = ContextCompat.getSystemService(this, ClipboardManager.class);
       cm.setText(selectedItem.getAbsPath());
       Toast.makeText(this, "copied " + selectedItem.getAbsPath(), Toast.LENGTH_SHORT).show();
+      break;
+
+      case R.id.fm_upload:
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
+        new AlertDialog.Builder(this)
+          .setTitle(R.string.fm_confirm_upload)
+          .setMessage(String.format(this.getResources().getString(R.string.fm_confirm_upload_desc), selectedItem.getAbsPath()))
+          .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              plugin.requestUpload(selectedItem.getAbsPath());
+              dialog.dismiss();
+            }
+          })
+          .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              dialog.cancel();
+            }
+          })
+          .show();
+      });
       break;
 
       default:

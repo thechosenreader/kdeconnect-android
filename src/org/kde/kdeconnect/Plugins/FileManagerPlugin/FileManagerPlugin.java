@@ -2,6 +2,7 @@ package org.kde.kdeconnect.Plugins.FileManagerPlugin;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
@@ -11,9 +12,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.kde.kdeconnect.NetworkPacket;
 import org.kde.kdeconnect.Helpers.RandomHelper;
+import org.kde.kdeconnect.Helpers.FilesHelper;
 import org.kde.kdeconnect.async.BackgroundJob;
 import org.kde.kdeconnect.async.BackgroundJobHandler;
 import org.kde.kdeconnect.Plugins.SharePlugin.CompositeReceiveFileJob;
+import org.kde.kdeconnect.Plugins.SharePlugin.CompositeUploadFileJob;
 import org.kde.kdeconnect.Plugins.Plugin;
 import org.kde.kdeconnect.Plugins.PluginFactory;
 import org.kde.kdeconnect_tp.R;
@@ -41,6 +44,10 @@ public class FileManagerPlugin extends Plugin {
   private final ArrayDeque<String> lastVisitedStack = new ArrayDeque<>();
   private final HashMap<String, Integer> lastPositionsMap = new HashMap(); // default capacity 16, probably good enough right?
 
+  // will probably need to keep track of files to maintain the cache;
+  // map to an ordered pair with time info or use something that is ordered?
+  private final HashMap<String, String> cachedFilesMap = new HashMap();
+
   private int lastViewedPosition;
   private static String currentDirectory = "";
 
@@ -58,6 +65,17 @@ public class FileManagerPlugin extends Plugin {
     }
   };
 
+  private final BackgroundJob.Callback<Void> fileUploadedCallback = new BackgroundJob.Callback<Void>() {
+    @Override
+    public void onResult(@NonNull BackgroundJob job, Void result) {
+      Log.d("FileManagerPlugin", "fileUploadedCallback - success!");
+    }
+
+    @Override
+    public void onError(@NonNull BackgroundJob job, @NonNull Throwable error) {
+      Log.e("FileManagerPlugin", "error uploading file", error);
+    }
+  };
 
   interface ListingChangedCallback  {
     void update();
@@ -304,16 +322,35 @@ public class FileManagerPlugin extends Plugin {
     NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
     np.set("requestDownloadForViewing", true);
     np.set("path", targetpath);
-    np.set("dest", String.format("%s/%s", cachedir, RandomHelper.randomString(15)));
+    String dest = String.format("%s/%s", cachedir, RandomHelper.randomString(15));
+    np.set("dest", dest);
+    Log.d("FileManagerPlugin", String.format("adding (%s, %s) to cache", targetpath, dest));
+    cachedFilesMap.put(targetpath, dest);
     device.sendPacket(np);
   }
 
+  public void requestUpload(final String path) {
+    CompositeUploadFileJob job = new CompositeUploadFileJob(device, fileUploadedCallback);
+    Uri uri = new Uri.Builder().scheme("file").path(cachedFilesMap.get(path)).build();
+    Log.d("FileManagerPlugin", "built uri for upload with " + uri.toString());
+    NetworkPacket np = FilesHelper.uriToNetworkPacket(context, uri, PACKET_TYPE_FILEMANAGER_REQUEST);
+    np.set("filename", path);
+    job.addNetworkPacket(np);
+    backgroundJobHandler.runJob(job);
+  }
+
   public String getCWDDetails() {
-    return String.format("Count: %d\nHistory stack size: %d\nPositions cache size: %d",
+    return String.format("Count: %d\nHistory stack size: %d\nPositions cache size: %d\nFiles cache size: %d",
                           directoryItems.size(),
                           lastVisitedStack.size(),
-                          lastPositionsMap.size());
+                          lastPositionsMap.size(),
+                          cachedFilesMap.size());
   }
+
+  public boolean isCached(final String filename) {
+    return cachedFilesMap.containsKey(filename);
+  }
+
 
   @Override
   public String[] getSupportedPacketTypes() {

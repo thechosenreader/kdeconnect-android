@@ -59,7 +59,7 @@ public class CompositeUploadFileJob extends BackgroundJob<Device, Void> {
     @GuardedBy("lock")
     private long totalPayloadSize;
 
-    CompositeUploadFileJob(@NonNull Device device, @NonNull Callback<Void> callback) {
+    public CompositeUploadFileJob(@NonNull Device device, @NonNull Callback<Void> callback) {
         super(device, callback);
 
         isRunning = false;
@@ -157,7 +157,7 @@ public class CompositeUploadFileJob extends BackgroundJob<Device, Void> {
         uploadNotification.show();
     }
 
-    void addNetworkPacket(@NonNull NetworkPacket networkPacket) {
+    public void addNetworkPacket(@NonNull NetworkPacket networkPacket) {
         synchronized (lock) {
             networkPacketList.add(networkPacket);
 
