@@ -4,6 +4,7 @@ package org.kde.kdeconnect.Plugins.FileManagerPlugin;
 import android.app.ActionBar;
 import android.content.ClipboardManager;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Bundle;
 import android.util.Log;
@@ -25,6 +26,7 @@ import androidx.activity.OnBackPressedCallback;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.kde.kdeconnect.Helpers.RandomHelper;
 import org.kde.kdeconnect.Plugins.Plugin;
 import org.kde.kdeconnect.Plugins.RunCommandPlugin.RunCommandPlugin;
 import org.kde.kdeconnect.BackgroundService;
@@ -212,9 +214,12 @@ public class FileManagerActivity extends AppCompatActivity {
       break;
 
       case R.id.fm_view_as_text:
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
-        plugin.requestDownloadForViewing(this.getCacheDir().getAbsolutePath(), selectedItem.getAbsPath());
-      });
+      final String cachePath = String.format("%s/%s", this.getCacheDir().getAbsolutePath(), RandomHelper.randomString(15));
+      Intent intent = new Intent(this, TextEditorActivity.class);
+      intent.putExtra("deviceId", deviceId);
+      intent.putExtra("targetFilePath", selectedItem.getAbsPath());
+      intent.putExtra("cacheFilePath", cachePath);
+      this.startActivity(intent);
       break;
 
       case R.id.directory_download_zip:

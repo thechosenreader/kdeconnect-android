@@ -481,7 +481,8 @@
     <string name="fm_home">Home</string>
     <string name="fm_togglehidden">Toggle hidden</string>
     <string name="fm_viewastext">View as text</string>
-
+    <string name="pref_plugin_texteditor">Edit as text</string>
+    <string name="loading">Loading..</string>
 
 
 </resources>

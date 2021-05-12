@@ -199,15 +199,6 @@
         </activity>
 
         <activity
-            android:name="org.kde.kdeconnect.Plugins.FileManagerPlugin.FileManagerActivity"
-            android:label="@string/pref_plugin_filemanager"
-            android:parentActivityName="org.kde.kdeconnect.UserInterface.MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.kde.kdeconnect.UserInterface.MainActivity" />
-        </activity>
-
-        <activity
             android:name="org.kde.kdeconnect.Plugins.RunCommandPlugin.RunCommandWidgetDeviceSelector"
             android:excludeFromRecents="true"
             android:label="@string/pref_plugin_runcommand"
@@ -384,6 +375,23 @@
                 android:value="org.kde.kdeconnect.UserInterface.MainActivity" />
         </activity>
 
+        <activity
+            android:name="org.kde.kdeconnect.Plugins.FileManagerPlugin.FileManagerActivity"
+            android:label="@string/pref_plugin_filemanager"
+            android:parentActivityName="org.kde.kdeconnect.UserInterface.MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.kde.kdeconnect.UserInterface.MainActivity" />
+        </activity>
+
+        <activity
+            android:name="org.kde.kdeconnect.Plugins.FileManagerPlugin.TextEditorActivity"
+            android:label="@string/pref_plugin_filemanager"
+            android:parentActivityName="org.kde.kdeconnect.Plugins.FileManagerPlugin.FileManagerActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.kde.kdeconnect.Plugins.FileManagerPlugin.FileManagerActivity" />
+        </activity>
 
     </application>
 

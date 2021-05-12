@@ -11,7 +11,6 @@ import androidx.annotation.NonNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.kde.kdeconnect.NetworkPacket;
-import org.kde.kdeconnect.Helpers.RandomHelper;
 import org.kde.kdeconnect.Helpers.FilesHelper;
 import org.kde.kdeconnect.async.BackgroundJob;
 import org.kde.kdeconnect.async.BackgroundJobHandler;
@@ -62,29 +61,32 @@ public class FileManagerPlugin extends Plugin {
 
   private static String lastDownloadedFile;
   private BackgroundJobHandler backgroundJobHandler = BackgroundJobHandler.newFixedThreadPoolBackgroundJobHander(5);
-  private final BackgroundJob.Callback<Void> fileReceivedCallback = new BackgroundJob.Callback<Void>() {
-    @Override
-    public void onResult(@NonNull BackgroundJob job, Void result) {
-      Log.d("FileManagerPlugin", "fileReceivedCallback - got " + lastDownloadedFile);
-    }
 
-    @Override
-    public void onError(@NonNull BackgroundJob job, @NonNull Throwable error) {
-      Log.e("FileManagerPlugin", "error receiving file", error);
-    }
-  };
-
-  private final BackgroundJob.Callback<Void> fileUploadedCallback = new BackgroundJob.Callback<Void>() {
-    @Override
-    public void onResult(@NonNull BackgroundJob job, Void result) {
-      Log.d("FileManagerPlugin", "fileUploadedCallback - success!");
-    }
-
-    @Override
-    public void onError(@NonNull BackgroundJob job, @NonNull Throwable error) {
-      Log.e("FileManagerPlugin", "error uploading file", error);
-    }
-  };
+  private BackgroundJob.Callback<Void> fileReceivedCallback;
+  private BackgroundJob.Callback<Void> fileUploadedCallback;
+  // private final BackgroundJob.Callback<Void> fileReceivedCallback = new BackgroundJob.Callback<Void>() {
+  //   @Override
+  //   public void onResult(@NonNull BackgroundJob job, Void result) {
+  //     Log.d("FileManagerPlugin", "fileReceivedCallback - got " + lastDownloadedFile);
+  //   }
+  //
+  //   @Override
+  //   public void onError(@NonNull BackgroundJob job, @NonNull Throwable error) {
+  //     Log.e("FileManagerPlugin", "error receiving file", error);
+  //   }
+  // };
+  //
+  // private final BackgroundJob.Callback<Void> fileUploadedCallback = new BackgroundJob.Callback<Void>() {
+  //   @Override
+  //   public void onResult(@NonNull BackgroundJob job, Void result) {
+  //     Log.d("FileManagerPlugin", "fileUploadedCallback - success!");
+  //   }
+  //
+  //   @Override
+  //   public void onError(@NonNull BackgroundJob job, @NonNull Throwable error) {
+  //     Log.e("FileManagerPlugin", "error uploading file", error);
+  //   }
+  // };
 
 
   interface ListingChangedCallback  {
@@ -400,16 +402,16 @@ public class FileManagerPlugin extends Plugin {
     device.sendPacket(np);
   }
 
-  public void requestDownloadForViewing(final String cachedir, final String targetpath) {
+  public void requestDownloadForViewing(final String cachepath, final String targetpath) {
     NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
     np.set("requestDownloadForViewing", true);
     np.set("path", targetpath);
-    String dest = String.format("%s/%s", cachedir, RandomHelper.randomString(15));
-    np.set("dest", dest);
-    Log.d("FileManagerPlugin", String.format("adding (%s, %s) to cache", targetpath, dest));
-    cachedFilesMap.put(targetpath, dest);
+    np.set("dest", cachepath);
+    Log.d("FileManagerPlugin", String.format("adding (%s, %s) to cache", targetpath, cachepath));
+    cachedFilesMap.put(targetpath, cachepath);
     device.sendPacket(np);
     serializeFilesCache();
+
   }
 
   public void requestUpload(final String path) {
@@ -431,8 +433,20 @@ public class FileManagerPlugin extends Plugin {
                           getCacheSize() / 1024 / 1024);
   }
 
+  public void setFileReceivedCallback(BackgroundJob.Callback<Void> callback) {
+    fileReceivedCallback = callback;
+  }
+
+  public void setFileUploadedCallback(BackgroundJob.Callback<Void> callback) {
+    fileUploadedCallback = callback;
+  }
+
   public boolean isCached(final String filename) {
     return cachedFilesMap.containsKey(filename);
+  }
+
+  public String getCachedPath(final String targetpath, final String defaultV) {
+    return cachedFilesMap.getOrDefault(targetpath, defaultV);
   }
 
   public void serializeFilesCache() {
