@@ -204,6 +204,9 @@ public class TextEditorActivity extends AppCompatActivity {
       save();
       upload();
       break;
+
+      default:
+      return super.onOptionsItemSelected(item);
     }
 
     return true;
@@ -231,5 +234,6 @@ public class TextEditorActivity extends AppCompatActivity {
     });
 
   }
+
 
 }

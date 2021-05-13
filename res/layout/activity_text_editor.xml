@@ -22,6 +22,7 @@
             android:layout_margin="4dp"
             android:addStatesFromChildren="true"
             android:textAppearance="?android:attr/textAppearanceSmall"
+            android:inputType="textMultiLine|textNoSuggestions"
             android:orientation="vertical" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
