@@ -14,7 +14,7 @@ Here you can find a high level overview of the changes I've made and the feature
     * easily download files and entire directories
     * run commands within the context of a directory
     * move, rename, and delete files
-    * view and edit files as text (coming soon)
+    * view and edit files as text
 
 - **Remote Desktop**
     * coming soon
