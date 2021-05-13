@@ -364,11 +364,11 @@ public class FileManagerActivity extends AppCompatActivity {
     switch (item.getItemId()) {
       case R.id.fm_refresh:
       BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.requestDirectoryListing());
-      return true;
+      break;
 
       case R.id.fm_togglehidden:
       BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.requestToggleHidden());
-      return true;
+      break;
 
       case R.id.fm_create_directory:
       BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
@@ -391,7 +391,7 @@ public class FileManagerActivity extends AppCompatActivity {
           })
           .show();
       });
-      return true;
+      break;
 
       case R.id.fm_runcommand:
       BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
@@ -416,20 +416,25 @@ public class FileManagerActivity extends AppCompatActivity {
           })
           .show();
       });
-      return true;
+      break;
 
       case R.id.details:
       BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class,
         plugin -> Toast.makeText(FileManagerActivity.this, plugin.getCWDDetails(), Toast.LENGTH_LONG).show());
-      return true;
+      break;
 
       case R.id.fm_home:
       BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.requestHomeDirectoryListing());
-      return true;
+      break;
+
+      case R.id.fm_wipe_cache:
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.wipeCache());
+      break;
 
       default:
       return super.onOptionsItemSelected(item);
     }
+    return true;
   }
 
 

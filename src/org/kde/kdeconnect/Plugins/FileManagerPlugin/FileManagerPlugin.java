@@ -472,6 +472,18 @@ public class FileManagerPlugin extends Plugin {
     return total;
   }
 
+  public void wipeCache() {
+    for (String cachePath : cachedFilesMap.values()) {
+      File f = new File(cachePath);
+      if (f.exists())
+        f.delete();
+
+    }
+
+    cachedFilesMap.clear();
+    serializeFilesCache();
+  }
+
   @Override
   public String[] getSupportedPacketTypes() {
       return new String[]{PACKET_TYPE_FILEMANAGER};
