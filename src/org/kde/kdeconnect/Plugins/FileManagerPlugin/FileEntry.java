@@ -12,7 +12,7 @@ public class FileEntry extends EntryItem {
   private final long size;
   private final boolean readable;
 
-  private final String fullInfoFormat = "Path: %s\nPermissions: %s\nOwner: %s\nGroup: %s\nSize: %d\nLast Modified: %s";
+  private final String fullInfoFormat = "Path: %s\nPermissions: %s\nOwner: %s\nGroup: %s\nSize: %d (%dM)\nLast Modified: %s";
          // Path: %s\ns
          // Permissions: %s\n
          // Owner: %s\n
@@ -33,7 +33,7 @@ public class FileEntry extends EntryItem {
   }
 
   private static String formatFileInfo(String permissions, String owner, String group, long size, String lastModified) {
-    return permissions + " " + owner + " " + group + "   " + size + "   " + lastModified;
+    return String.format("%s %s %s   %d   %s", permissions, owner, group, size, lastModified);
   }
 
   public String getAbsPath() {
@@ -69,7 +69,7 @@ public class FileEntry extends EntryItem {
   }
 
   public String getFullInfo() {
-      return String.format(fullInfoFormat, abspath, permissions, owner, group, size, lastModified);
+      return String.format(fullInfoFormat, abspath, permissions, owner, group, size, size / 1024 / 1024, lastModified);
   }
 
   public boolean isReadable() {
