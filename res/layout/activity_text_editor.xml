@@ -21,6 +21,7 @@
             android:layout_height="match_parent"
             android:layout_margin="4dp"
             android:addStatesFromChildren="true"
+            android:textAppearance="?android:attr/textAppearanceSmall"
             android:orientation="vertical" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>

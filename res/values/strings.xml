@@ -457,6 +457,8 @@
     <string name="details">Details</string>
     <string name="delete">Delete</string>
     <string name="upload">Upload</string>
+    <string name="save">Save</string>
+    <string name="saveandupload">Save and upload</string>
     <string name="move">Move to..</string>
 
     <string name="pref_plugin_filemanager">File Manager</string>
@@ -479,10 +481,15 @@
     <string name="fm_runcommand">Run command..</string>
     <string name="fm_runcommand_desc">Run a command in\n%s</string>
     <string name="fm_home">Home</string>
+    <string name="fm_wipecache">Wipe cache</string>
     <string name="fm_togglehidden">Toggle hidden</string>
     <string name="fm_viewastext">View as text</string>
     <string name="pref_plugin_texteditor">Edit as text</string>
     <string name="loading">Loading..</string>
+    <string name="uploaded">uploaded</string>
+    <string name="errordownload">Error retrieving file\n%s</string>
+    <string name="errorread">Error reading file\n%s</string>
+    <string name="errorupload">Error uploading file\n%s</string>
 
 
 </resources>
