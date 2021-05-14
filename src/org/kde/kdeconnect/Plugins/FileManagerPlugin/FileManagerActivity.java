@@ -147,7 +147,7 @@ public class FileManagerActivity extends AppCompatActivity {
     // getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_TITLE_MULTIPLE_LINES);
 
     // setHasOptionsMenu(true);
-
+    Log.d("FileManagerActivity", "onCreate()");
     deviceId = getIntent().getStringExtra("deviceId");
 
     binding.gotoPathButton.setOnClickListener(
@@ -175,6 +175,8 @@ public class FileManagerActivity extends AppCompatActivity {
 
             }));
 
+    // make sure directory listing is recent
+    BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.requestDirectoryListing());
     updateView();
   }
 

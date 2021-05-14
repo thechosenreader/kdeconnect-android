@@ -121,7 +121,7 @@ public class FileManagerPlugin extends Plugin {
   }
 
   public ArrayList<FileEntry> getDirectoryItems() {
-    return directoryItems;
+    return new ArrayList<>(directoryItems);
   }
 
   public ArrayList<String> getErrorMessages() {
