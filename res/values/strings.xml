@@ -454,6 +454,8 @@
     <string name="source_code_url" translatable="false">https://invent.kde.org/network/kdeconnect-android/</string>
     <string name="licenses">Licenses</string>
 
+    <string name="rc_pos_args_hint">positional args.. one per line</string>
+    <string name="rc_arguments">Arguments..</string>
     <string name="details">Details</string>
     <string name="delete">Delete</string>
     <string name="upload">Upload</string>
