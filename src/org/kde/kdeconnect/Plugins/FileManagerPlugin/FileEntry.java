@@ -10,7 +10,7 @@ import org.kde.kdeconnect_tp.databinding.FmListItemEntryBinding;
 public class FileEntry extends EntryItem {
   private final String abspath, permissions, owner, group, lastModified;
   private final long size;
-  private final boolean readable;
+  private final boolean readable, _isDirectory;
 
   private final String fullInfoFormat = "Path: %s\nPermissions: %s\nOwner: %s\nGroup: %s\nSize: %d (%dM)\nLast Modified: %s";
          // Path: %s\ns
@@ -30,6 +30,8 @@ public class FileEntry extends EntryItem {
       this.group        = group;
       this.lastModified = lastModified;
       this.readable     = readable;
+
+      this._isDirectory = filename.endsWith("/");
   }
 
   private static String formatFileInfo(String permissions, String owner, String group, long size, String lastModified) {
@@ -74,6 +76,10 @@ public class FileEntry extends EntryItem {
 
   public boolean isReadable() {
     return readable;
+  }
+
+  public boolean isDirectory() {
+    return _isDirectory;
   }
 
   @NonNull

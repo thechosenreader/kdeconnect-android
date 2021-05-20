@@ -186,8 +186,9 @@ public class FileManagerActivity extends AppCompatActivity {
 
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.filemanager_context, menu);
-    String selectedPath = directoryItems.get(((AdapterView.AdapterContextMenuInfo) menuInfo).position).getAbsPath();
-    boolean isDirectorySelected = selectedPath.endsWith("/");
+    FileEntry selectedItem = directoryItems.get(((AdapterView.AdapterContextMenuInfo) menuInfo).position);
+    String selectedPath = selectedItem.getAbsPath();
+    boolean isDirectorySelected = selectedItem.isDirectory();
     if (isDirectorySelected) {
       menu.findItem(R.id.directory_download_zip).setVisible(true);
       menu.findItem(R.id.fm_view_as_text).setVisible(false);
