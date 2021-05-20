@@ -44,9 +44,6 @@ public class RunCommandWidget extends AppWidgetProvider {
                         Log.d("RunCommand", "Running command from WIDGET");
 
                         if (ArgumentParser.hasArguments(cmd)) {
-                          Log.d("RunCommand", "Running command with arguments");
-                          Log.d("RunCommand", "Max args: " + ArgumentParser.getMaxArg(cmd));
-                          Log.d("RunCommand", "As function: " + ArgumentParser.wrapAsFunction(cmd));
 
                           RunCommandWidgetArgumentGetter.plugin = plugin;
                           RunCommandWidgetArgumentGetter.cmdKey = targetCommand;

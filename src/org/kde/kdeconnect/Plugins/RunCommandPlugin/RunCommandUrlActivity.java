@@ -55,11 +55,7 @@ public class RunCommandUrlActivity extends AppCompatActivity {
 
                     Log.d("RunCommand", "Running command from URIACTIVITY");
                     if (ArgumentParser.hasArguments(cmd)) {
-                      Log.d("RunCommand", "Running command with arguments");
-                      Log.d("RunCommand", "Max args: " + ArgumentParser.getMaxArg(cmd));
-                      Log.d("RunCommand", "As a function: " + ArgumentParser.wrapAsFunction(cmd));
-
-                      ArgumentParser.getAndRunWithArgs(this, plugin, cmdKey, cmd, null);
+                      new ArgumentParser(this, plugin, cmdKey, cmd, null).getAndRunWithArgs();
                     }
                     else {
                       plugin.runCommand(cmdKey);

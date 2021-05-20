@@ -73,7 +73,7 @@ public class RunCommandActivity extends AppCompatActivity {
                         Log.d("RunCommand", "Running command from ACTIVITY");
 
                         if (ArgumentParser.hasArguments(cmd)) {
-                          ArgumentParser.getAndRunWithArgs(RunCommandActivity.this, plugin, cmdKey, cmd, null);
+                          new ArgumentParser(RunCommandActivity.this, plugin, cmdKey, cmd, null).getAndRunWithArgs();
                         }
                         else {
                           plugin.runCommand(cmdKey);

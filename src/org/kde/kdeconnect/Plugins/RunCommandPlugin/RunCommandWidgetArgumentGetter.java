@@ -11,11 +11,11 @@ public final class RunCommandWidgetArgumentGetter extends AppCompatActivity {
   public void onCreate(Bundle bundle) {
     super.onCreate(bundle);
     requestWindowFeature(Window.FEATURE_NO_TITLE);
-    ArgumentParser.getAndRunWithArgs(this, plugin, cmdKey,cmd, new Runnable(){
+    new ArgumentParser(this, plugin, cmdKey,cmd, new Runnable(){
       @Override
       public void run(){
         finish();
       }
-    });
+    }).getAndRunWithArgs();
   }
 }
