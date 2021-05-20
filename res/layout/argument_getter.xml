@@ -1,24 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+
+<LinearLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:layout_width="match_parent"
-  android:layout_height="match_parent">
+  android:layout_height="wrap_content"
+  android:orientation="vertical"
+  android:paddingEnd="?android:attr/scrollbarSize"
+  android:paddingStart="?android:attr/scrollbarSize"
+  >
+  <!-- android:paddingRight="?android:attr/scrollbarSize" -->
+  <!-- android:paddingLeft="12dip" -->
 
-  <LinearLayout
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:orientation="vertical"
-      android:id="@+id/arg_layout">
+  <TextView
+    android:id="@+id/dialog_message"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:textAppearance="?android:attr/textAppearanceSmall" />
 
-      <EditText
-           android:id="@+id/pos_args"
-           android:layout_height="wrap_content"
-           android:layout_width="match_parent"
-           android:hint = "@string/rc_pos_args_hint"
-           android:inputType="text"/>
+  <ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-      <!-- children are EditTexts that will be added programmatically -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:id="@+id/arg_layout">
 
-  </LinearLayout>
+        <EditText
+             android:id="@+id/pos_args"
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:hint = "@string/rc_pos_args_hint"
+             android:inputType="text"/>
 
-</ScrollView>
+        <!-- children are EditTexts that will be added programmatically -->
+
+    </LinearLayout>
+
+  </ScrollView>
+</LinearLayout>
