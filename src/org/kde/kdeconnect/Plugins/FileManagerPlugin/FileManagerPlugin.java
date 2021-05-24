@@ -6,7 +6,6 @@ import android.net.Uri;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,8 +24,6 @@ import java.util.Set;
 import java.util.ArrayList;
 import java.util.ArrayDeque;
 import java.util.HashMap;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,51 +40,27 @@ public class FileManagerPlugin extends Plugin {
   private final static String PACKET_TYPE_FILEMANAGER = "kdeconnect.filemanager";
   private final static String PACKET_TYPE_FILEMANAGER_REQUEST = "kdeconnect.filemanager.request";
 
-  private final ArrayList<JSONObject> directoryListing = new ArrayList<>();
+  //  private final ArrayList<JSONObject> directoryListing = new ArrayList<>();
   private final ArrayList<ListingChangedCallback> callbacks = new ArrayList<>();
   private final ArrayList<FileEntry> directoryItems = new ArrayList<>();
 
   private final ArrayList<String> errorMessages = new ArrayList<>();
   private final ArrayDeque<String> lastVisitedStack = new ArrayDeque<>();
-  private final HashMap<String, Integer> lastPositionsMap = new HashMap(); // default capacity 16, probably good enough right?
+  private final HashMap<String, Integer> lastPositionsMap = new HashMap<>(); // default capacity 16, probably good enough right?
 
   // will probably need to keep track of files to maintain the cache;
   // map to an ordered pair with time info or use something that is ordered?
   private HashMap<String, String> cachedFilesMap;
   private Long maxCacheSize = 100000000L;  // 100 Mb
 
-  private int lastViewedPosition;
+  //  private int lastViewedPosition;
   private static String currentDirectory = "";
 
   private static String lastDownloadedFile;
-  private BackgroundJobHandler backgroundJobHandler = BackgroundJobHandler.newFixedThreadPoolBackgroundJobHander(5);
+  private final BackgroundJobHandler backgroundJobHandler = BackgroundJobHandler.newFixedThreadPoolBackgroundJobHander(5);
 
   private BackgroundJob.Callback<Void> fileReceivedCallback;
   private BackgroundJob.Callback<Void> fileUploadedCallback;
-  // private final BackgroundJob.Callback<Void> fileReceivedCallback = new BackgroundJob.Callback<Void>() {
-  //   @Override
-  //   public void onResult(@NonNull BackgroundJob job, Void result) {
-  //     Log.d("FileManagerPlugin", "fileReceivedCallback - got " + lastDownloadedFile);
-  //   }
-  //
-  //   @Override
-  //   public void onError(@NonNull BackgroundJob job, @NonNull Throwable error) {
-  //     Log.e("FileManagerPlugin", "error receiving file", error);
-  //   }
-  // };
-  //
-  // private final BackgroundJob.Callback<Void> fileUploadedCallback = new BackgroundJob.Callback<Void>() {
-  //   @Override
-  //   public void onResult(@NonNull BackgroundJob job, Void result) {
-  //     Log.d("FileManagerPlugin", "fileUploadedCallback - success!");
-  //   }
-  //
-  //   @Override
-  //   public void onError(@NonNull BackgroundJob job, @NonNull Throwable error) {
-  //     Log.e("FileManagerPlugin", "error uploading file", error);
-  //   }
-  // };
-
 
   interface ListingChangedCallback  {
     void update();
@@ -116,9 +89,9 @@ public class FileManagerPlugin extends Plugin {
       return ContextCompat.getDrawable(context, R.drawable.ic_filemanager_plugin_24dp);
   }
 
-  public ArrayList<JSONObject> getDirectoryListing() {
-    return directoryListing;
-  }
+//  public ArrayList<JSONObject> getDirectoryListing() {
+//    return directoryListing;
+//  }
 
   public ArrayList<FileEntry> getDirectoryItems() {
     return new ArrayList<>(directoryItems);
@@ -176,7 +149,7 @@ public class FileManagerPlugin extends Plugin {
           try {
             FileInputStream fis = new FileInputStream(serializedFilesCache);
             ObjectInputStream ois = new ObjectInputStream(fis);
-            cachedFilesMap = (HashMap) ois.readObject();
+            cachedFilesMap = (HashMap<String, String>) ois.readObject();
             fis.close();
             ois.close();
 
@@ -184,7 +157,7 @@ public class FileManagerPlugin extends Plugin {
             final ArrayList<Map.Entry<String, String>> cachedEntries = new ArrayList<>();
             Set<Map.Entry<String, String>> entries = cachedFilesMap.entrySet();
 
-            Long totalSize = 0L;
+            long totalSize = 0L;
             for (Map.Entry<String, String> e : entries) {
               File f = new File(e.getValue());
               if (f.exists()) {
@@ -193,16 +166,17 @@ public class FileManagerPlugin extends Plugin {
               }
             }
 
-            Collections.sort(cachedEntries, new Comparator<Map.Entry<String, String>>(){
-              public int compare(Map.Entry<String, String> a, Map.Entry<String, String> b) {
-                File fa = new File(a.getValue());
-                File fb = new File(b.getValue());
-                Long falm = fa.lastModified();
-                Long fblm = fb.lastModified();
+            cachedEntries.sort((a, b) -> {
+              File fa = new File(a.getValue());
+              File fb = new File(b.getValue());
+              long falm = fa.lastModified();
+              long fblm = fb.lastModified();
 
-                // sort such that the last element is least recently modified
+              // sort such that the last element is least recently modified
+              if (falm == fblm)
+                return 0;
+              else
                 return (falm >= fblm) ? -1 : 1;
-              }
             });
 
             Log.d("FileManagerPlugin", "totalSize = " + totalSize);
@@ -274,7 +248,7 @@ public class FileManagerPlugin extends Plugin {
           }
         }
 
-        directoryListing.clear();
+        // directoryListing.clear();
         try {
           directoryItems.clear();
           JSONObject obj = new JSONObject(np.getString("directoryListing"));
@@ -284,7 +258,7 @@ public class FileManagerPlugin extends Plugin {
             String p = paths.next();
             JSONObject o = obj.getJSONObject(p);
             o.put("path", p);
-            directoryListing.add(o);
+            // directoryListing.add(o);
 
             try {
               directoryItems.add(new FileEntry(
@@ -344,8 +318,13 @@ public class FileManagerPlugin extends Plugin {
   }
 
   public void requestDirectoryListing(final String path) {
-    if (path == currentDirectory || path == ".")
+    /* since unsolicited listings are a thing, paths are not added to the stack if they're the same
+     as the cwd. however, if the user explicitly wants to go to the cwd (through the goto button),
+     then adding it to the stack might be desirable
+     */
+    if (path.equals(currentDirectory) || path.equals("."))
       lastVisitedStack.push(currentDirectory);
+
     NetworkPacket np = new NetworkPacket(PACKET_TYPE_FILEMANAGER_REQUEST);
     np.set("requestDirectoryListing", true);
     np.set("directoryPath", path);

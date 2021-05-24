@@ -1,9 +1,8 @@
 
 package org.kde.kdeconnect.Plugins.FileManagerPlugin;
 
-import android.app.ActionBar;
+import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Bundle;
@@ -22,13 +21,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.activity.OnBackPressedCallback;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.kde.kdeconnect.Helpers.RandomHelper;
-import org.kde.kdeconnect.Plugins.Plugin;
-import org.kde.kdeconnect.Plugins.RunCommandPlugin.RunCommandPlugin;
 import org.kde.kdeconnect.BackgroundService;
 import org.kde.kdeconnect.UserInterface.List.ListAdapter;
 import org.kde.kdeconnect.UserInterface.ThemeUtil;
@@ -36,8 +30,6 @@ import org.kde.kdeconnect_tp.R;
 import org.kde.kdeconnect_tp.databinding.ActivityFileManagerBinding;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -74,12 +66,7 @@ public class FileManagerActivity extends AppCompatActivity {
 
       for (int i = 1; i < errors.size(); i++) {
         String error = errors.get(i);
-        handler.postDelayed(new Runnable() {
-          @Override
-          public void run() {
-            Toast.makeText(FileManagerActivity.this, error, Toast.LENGTH_SHORT).show();
-          }
-        }, Toast.LENGTH_SHORT);
+        handler.postDelayed(() -> Toast.makeText(FileManagerActivity.this, error, Toast.LENGTH_SHORT).show(), Toast.LENGTH_SHORT);
       }
 
       registerForContextMenu(binding.directoryListing);
@@ -100,7 +87,7 @@ public class FileManagerActivity extends AppCompatActivity {
                   .show();
         }
 
-        else if (selectedItem.getFileName().endsWith("/")) {
+        else if (selectedItem.isDirectory()) {
           plugin.requestDirectoryListing(selectedItem.getAbsPath());
         }
 
@@ -108,19 +95,11 @@ public class FileManagerActivity extends AppCompatActivity {
           new AlertDialog.Builder(FileManagerActivity.this)
             .setTitle(R.string.fm_confirm_download)
             .setMessage(String.format(FileManagerActivity.this.getResources().getString(R.string.fm_confirm_download_desc), selectedItem.getAbsPath()))
-            .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-              @Override
-              public void onClick(DialogInterface dialog, int which) {
-                plugin.requestDownload(selectedItem.getAbsPath());
-                dialog.dismiss();
-              }
+            .setPositiveButton(R.string.ok, (dialog, which) -> {
+              plugin.requestDownload(selectedItem.getAbsPath());
+              dialog.dismiss();
             })
-            .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-              @Override
-              public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-              }
-            })
+            .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel())
             .show();
 
         }
@@ -157,26 +136,18 @@ public class FileManagerActivity extends AppCompatActivity {
         new AlertDialog.Builder(FileManagerActivity.this)
               .setTitle(R.string.fm_goto_path)
               .setView(input)
-              .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                  final String inputtedPath = input.getText().toString();
-                  plugin.requestDirectoryListing(inputtedPath);
-                  dialog.dismiss();
-                }
+              .setPositiveButton(R.string.ok, (dialog, which) -> {
+                final String inputtedPath = input.getText().toString();
+                plugin.requestDirectoryListing(inputtedPath);
+                dialog.dismiss();
               })
-              .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                  dialog.cancel();
-                }
-              })
+              .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel())
               .show();
 
             }));
 
     // make sure directory listing is recent
-    BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.requestDirectoryListing());
+    BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, FileManagerPlugin::requestDirectoryListing);
     updateView();
   }
 
@@ -205,123 +176,84 @@ public class FileManagerActivity extends AppCompatActivity {
 
   @Override
   public boolean onContextItemSelected(MenuItem item) {
-    BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> updateLastViewedPosition(plugin));
+    BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, this::updateLastViewedPosition);
     AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
     FileEntry selectedItem = directoryItems.get(info.position);
 
+    int id = item.getItemId();
 
-    switch(item.getItemId()) {
-      case R.id.fm_file_info_details_item:
+    if (id == R.id.fm_file_info_details_item) {
       Toast toast = Toast.makeText(this, selectedItem.getFullInfo(), Toast.LENGTH_LONG);
       toast.show();
-      break;
+    }
 
-      case R.id.fm_view_as_text:
+    else if (id == R.id.fm_view_as_text) {
       final String cachePath = String.format("%s/%s", this.getCacheDir().getAbsolutePath(), RandomHelper.randomString(15));
       Intent intent = new Intent(this, TextEditorActivity.class);
       intent.putExtra("deviceId", deviceId);
       intent.putExtra("targetFilePath", selectedItem.getAbsPath());
       intent.putExtra("cacheFilePath", cachePath);
       this.startActivity(intent);
-      break;
+    }
 
-      case R.id.directory_download_zip:
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
-        new AlertDialog.Builder(this)
-          .setTitle(R.string.fm_confirm_download)
-          .setMessage(String.format(this.getResources().getString(R.string.fm_confirm_download_desc), selectedItem.getAbsPath() + ".zip"))
-          .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              plugin.requestDirectoryDownload(selectedItem.getAbsPath());
-              dialog.dismiss();
-            }
-          })
-          .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              dialog.cancel();
-            }
-          })
-          .show();
-        });
-      break;
+    else if (id == R.id.directory_download_zip) {
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin ->
+              new AlertDialog.Builder(this)
+                      .setTitle(R.string.fm_confirm_download)
+                      .setMessage(String.format(this.getResources().getString(R.string.fm_confirm_download_desc), selectedItem.getAbsPath() + ".zip"))
+                      .setPositiveButton(R.string.ok, (dialog, which) -> {
+                        plugin.requestDirectoryDownload(selectedItem.getAbsPath());
+                        dialog.dismiss();
+                      })
+                      .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel())
+                      .show());
+    }
 
-      case R.id.fm_delete:
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
-        new AlertDialog.Builder(this)
-          .setTitle(R.string.fm_confirm_delete)
-          .setMessage(String.format(this.getResources().getString(R.string.fm_confirm_delete_desc), selectedItem.getAbsPath()))
-          .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              plugin.requestDelete(selectedItem.getAbsPath());
-              dialog.dismiss();
-            }
-          })
-          .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              dialog.cancel();
-            }
-          })
-          .show();
-      });
-      break;
+    else if (id == R.id.fm_delete) {
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> new AlertDialog.Builder(this)
+              .setTitle(R.string.fm_confirm_delete)
+              .setMessage(String.format(this.getResources().getString(R.string.fm_confirm_delete_desc), selectedItem.getAbsPath()))
+              .setPositiveButton(R.string.ok, (dialog, which) -> {
+                plugin.requestDelete(selectedItem.getAbsPath());
+                dialog.dismiss();
+              })
+              .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel())
+              .show());
+    }
 
-      case R.id.fm_move:
+    else if (id == R.id.fm_move) {
       final EditText input = new EditText(this);
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
-        new AlertDialog.Builder(this)
-          .setView(input)
-          .setTitle(R.string.move)
-          .setMessage(String.format(this.getResources().getString(R.string.fm_rename_desc), selectedItem.getAbsPath()))
-          .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              plugin.requestRename(selectedItem.getAbsPath(), input.getText().toString());
-              dialog.dismiss();
-            }
-          })
-          .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              dialog.cancel();
-            }
-          })
-          .show();
-      });
-      break;
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> new AlertDialog.Builder(this)
+              .setView(input)
+              .setTitle(R.string.move)
+              .setMessage(String.format(this.getResources().getString(R.string.fm_rename_desc), selectedItem.getAbsPath()))
+              .setPositiveButton(R.string.ok, (dialog, which) -> {
+                plugin.requestRename(selectedItem.getAbsPath(), input.getText().toString());
+                dialog.dismiss();
+              })
+              .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel())
+              .show());
+    }
 
-      case R.id.fm_copy_path_to_clipboard:
+    else if (id == R.id.fm_copy_path_to_clipboard) {
       ClipboardManager cm = ContextCompat.getSystemService(this, ClipboardManager.class);
-      cm.setText(selectedItem.getAbsPath());
+      cm.setPrimaryClip(new ClipData("kdeconnect_runcommand", new String[]{"text/plain"}, new ClipData.Item(selectedItem.getAbsPath())));
       Toast.makeText(this, "copied " + selectedItem.getAbsPath(), Toast.LENGTH_SHORT).show();
-      break;
+    }
 
-      case R.id.fm_upload:
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
-        new AlertDialog.Builder(this)
-          .setTitle(R.string.fm_confirm_upload)
-          .setMessage(String.format(this.getResources().getString(R.string.fm_confirm_upload_desc), selectedItem.getAbsPath()))
-          .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              plugin.requestUpload(selectedItem.getAbsPath());
-              dialog.dismiss();
-            }
-          })
-          .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              dialog.cancel();
-            }
-          })
-          .show();
-      });
-      break;
+    else if (id == R.id.fm_upload) {
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> new AlertDialog.Builder(this)
+              .setTitle(R.string.fm_confirm_upload)
+              .setMessage(String.format(this.getResources().getString(R.string.fm_confirm_upload_desc), selectedItem.getAbsPath()))
+              .setPositiveButton(R.string.ok, (dialog, which) -> {
+                plugin.requestUpload(selectedItem.getAbsPath());
+                dialog.dismiss();
+              })
+              .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel())
+              .show());
+    }
 
-      default:
+    else {
       super.onContextItemSelected(item);
     }
 
@@ -331,17 +263,13 @@ public class FileManagerActivity extends AppCompatActivity {
   @Override
   protected void onResume() {
       super.onResume();
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
-        plugin.addListingChangedCallback(listingChangedCallback);
-      });
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.addListingChangedCallback(listingChangedCallback));
   }
 
   @Override
   protected void onPause() {
       super.onPause();
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
-        plugin.removeListingChangedCallback(listingChangedCallback);
-      });
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.removeListingChangedCallback(listingChangedCallback));
   }
 
   @Override
@@ -364,79 +292,61 @@ public class FileManagerActivity extends AppCompatActivity {
   public boolean onOptionsItemSelected(MenuItem item) {
     updateLastViewedPosition(BackgroundService.getInstance().getDevice(deviceId).getPlugin(FileManagerPlugin.class));
     final EditText input = new EditText(this);
-    switch (item.getItemId()) {
-      case R.id.fm_refresh:
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.requestDirectoryListing());
-      break;
+    int id = item.getItemId();
 
-      case R.id.fm_togglehidden:
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.requestToggleHidden());
-      break;
+    if (id == R.id.fm_refresh) {
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, FileManagerPlugin::requestDirectoryListing);
+    }
 
-      case R.id.fm_create_directory:
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
-        new AlertDialog.Builder(this)
-          .setView(input)
-          .setTitle(R.string.fm_create_directory)
-          .setMessage(String.format(this.getResources().getString(R.string.fm_create_directory_desc), currentDirectory))
-          .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              plugin.requestMakeDirectory(input.getText().toString());
-              dialog.dismiss();
-            }
-          })
-          .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              dialog.cancel();
-            }
-          })
-          .show();
-      });
-      break;
+    else if (id == R.id.fm_togglehidden) {
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, FileManagerPlugin::requestToggleHidden);
+    }
 
-      case R.id.fm_runcommand:
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
-        new AlertDialog.Builder(this)
-          .setView(input)
-          .setTitle(R.string.fm_runcommand)
-          .setMessage(String.format(this.getResources().getString(R.string.fm_runcommand_desc), currentDirectory))
-          .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              final String inputtedCmd = input.getText().toString();
-              Log.d("FileManagerPlugin", "running command " + inputtedCmd + " in " + currentDirectory);
-              plugin.requestRunCommand(inputtedCmd);
-              dialog.dismiss();
-            }
-          })
-          .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              dialog.cancel();
-            }
-          })
-          .show();
-      });
-      break;
+    else if (id == R.id.fm_create_directory) {
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> new AlertDialog.Builder(this)
+              .setView(input)
+              .setTitle(R.string.fm_create_directory)
+              .setMessage(String.format(this.getResources().getString(R.string.fm_create_directory_desc), currentDirectory))
+              .setPositiveButton(R.string.ok, (dialog, which) -> {
+                plugin.requestMakeDirectory(input.getText().toString());
+                dialog.dismiss();
+              })
+              .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel())
+              .show());
+    }
 
-      case R.id.details:
+    else if (id == R.id.fm_runcommand) {
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> new AlertDialog.Builder(this)
+              .setView(input)
+              .setTitle(R.string.fm_runcommand)
+              .setMessage(String.format(this.getResources().getString(R.string.fm_runcommand_desc), currentDirectory))
+              .setPositiveButton(R.string.ok, (dialog, which) -> {
+                final String inputtedCmd = input.getText().toString();
+                Log.d("FileManagerPlugin", "running command " + inputtedCmd + " in " + currentDirectory);
+                plugin.requestRunCommand(inputtedCmd);
+                dialog.dismiss();
+              })
+              .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel())
+              .show());
+    }
+
+    else if (id == R.id.details) {
       BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class,
-        plugin -> Toast.makeText(FileManagerActivity.this, plugin.getCWDDetails(), Toast.LENGTH_LONG).show());
-      break;
+              plugin -> Toast.makeText(FileManagerActivity.this, plugin.getCWDDetails(), Toast.LENGTH_LONG).show());
+    }
 
-      case R.id.fm_home:
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.requestHomeDirectoryListing());
-      break;
+    else if (id == R.id.fm_home) {
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, FileManagerPlugin::requestHomeDirectoryListing);
+    }
 
-      case R.id.fm_wipe_cache:
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> plugin.wipeCache());
-      break;
+    else if (id == R.id.fm_wipe_cache) {
+      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, FileManagerPlugin::wipeCache);
+    }
 
-      default:
+    else {
       return super.onOptionsItemSelected(item);
     }
+
     return true;
   }
 
@@ -449,12 +359,9 @@ public class FileManagerActivity extends AppCompatActivity {
 
   private void gotoLastPosition(FileManagerPlugin plugin) {
     lastViewedPosition = plugin.getLastViewedPositionForCWD();
-    binding.directoryListing.post(new Runnable() {
-      @Override
-      public void run() {
-        binding.directoryListing.smoothScrollToPosition(lastViewedPosition);
-        binding.directoryListing.setSelection(lastViewedPosition);
-      }
+    binding.directoryListing.post(() -> {
+      binding.directoryListing.smoothScrollToPosition(lastViewedPosition);
+      binding.directoryListing.setSelection(lastViewedPosition);
     });
 
     Log.d("FileManagerPlugin", "scrolled to " + lastViewedPosition);

@@ -47,9 +47,9 @@ public class TextEditorActivity extends AppCompatActivity {
 
   private BackgroundJobHandler backgroundJobHandler = BackgroundJobHandler.newFixedThreadPoolBackgroundJobHander(5);
 
-  class LoadingJob extends BackgroundJob<String, ArrayDeque<String>> {
-    private String pathToLoad;
-    private final ArrayDeque<String> strings = new ArrayDeque<String>();
+  static class LoadingJob extends BackgroundJob<String, ArrayDeque<String>> {
+    private final String pathToLoad;
+    private final ArrayDeque<String> strings = new ArrayDeque<>();
     private final Integer readChunkSize = 10240;  // 10 Kb; amount to read each time
     private final Integer addChunkSize = 1024;  // 1 Kb; amount for each string added to queue
 
@@ -61,11 +61,11 @@ public class TextEditorActivity extends AppCompatActivity {
     @Override
     public void run() {
       try {
-        File file = new File(cacheFilePath);
+        File file = new File(pathToLoad);
         // StringBuilder fileText = new StringBuilder((int) file.length());
         BufferedReader br = new BufferedReader(new FileReader(file));
         // String st;
-        Integer off = 0;
+        int off = 0;
         char[] cbuf = new char[readChunkSize];
         int r;
         while ((r = br.read(cbuf, 0, readChunkSize)) != -1) {
@@ -175,7 +175,7 @@ public class TextEditorActivity extends AppCompatActivity {
     init();
     viewBinding = ActivityTextEditorBinding.inflate(getLayoutInflater());
     // viewBinding.
-    viewBinding.textView.setText("Loading..");
+    viewBinding.textView.setText(R.string.loading);
     setContentView(viewBinding.getRoot());
     setSupportActionBar(viewBinding.toolbarLayout.toolbar);
     Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
@@ -215,24 +215,23 @@ public class TextEditorActivity extends AppCompatActivity {
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-    switch(item.getItemId()) {
-      case R.id.fm_save:
+    int id = item.getItemId();
+    if (id == R.id.fm_save) {
       BackgroundService.RunCommand(this, service -> save());
-      break;
+    }
 
-      case R.id.fm_upload:
+    else if (id == R.id.fm_upload) {
       upload();
-      break;
+    }
 
-      case R.id.fm_save_upload:
+    else if (id == R.id.fm_save_upload) {
       BackgroundService.RunCommand(this, service -> {
         save();
         upload();
       });
+    }
 
-      break;
-
-      default:
+    else {
       return super.onOptionsItemSelected(item);
     }
 
@@ -270,9 +269,7 @@ public class TextEditorActivity extends AppCompatActivity {
       runOnUiThread(() -> Toast.makeText(this, "saved " + targetFilePath, Toast.LENGTH_SHORT).show());
     } catch (IOException ioe) {
         Log.e("TextEditorActivity", "error saving file " + cacheFilePath, ioe);
-        runOnUiThread(() -> {
-          Toast.makeText(this, String.format("Could not save file\n%s", ioe.getMessage()), Toast.LENGTH_LONG).show();
-        });
+        runOnUiThread(() -> Toast.makeText(this, String.format("Could not save file\n%s", ioe.getMessage()), Toast.LENGTH_LONG).show());
     }
   }
 
