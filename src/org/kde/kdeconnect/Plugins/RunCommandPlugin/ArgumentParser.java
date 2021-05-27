@@ -31,6 +31,7 @@ public class ArgumentParser {
 	// without weird escaping: \$\$(?<name>[a-zA-Z_][_a-zA-Z0-9]*)(="(?<default>.*?)(?<![\\])")?
 	private static final Pattern namedArgPattern = Pattern.compile("\\$\\$(?<name>[a-zA-Z_][_a-zA-Z0-9]*)(?<notname>=\"(?<default>.*?)(?<![\\\\])\")?");
 	private static final Pattern hasNamedArgsPattern = Pattern.compile("(.*\\$\\$[a-zA-Z_][_a-zA-Z0-9]*.*)");
+	private static final String namedArgDeclaration = "$$";
 
 	private ArgumentGetterBinding argBinding;
 
@@ -151,9 +152,11 @@ public class ArgumentParser {
 	}
 
 	private static void replaceNamedArg(StringBuilder cmd, String passedArg, String namedArg) {
-		Pattern p = Pattern.compile("$$" + namedArg, Pattern.LITERAL);
+		Pattern p = Pattern.compile(namedArgDeclaration + namedArg, Pattern.LITERAL);
+		// do not wrap supplied value in quotes if argument name starts with _
+		String format = (namedArg.startsWith("_")) ? "%s" : "\"%s\"";
 		cmd.replace(0, cmd.length(),
-			p.matcher(cmd.toString()).replaceAll(String.format("\"%s\"", passedArg)));
+			p.matcher(cmd.toString()).replaceAll(String.format(format, passedArg)));
 	}
 
 	// wrap a given command in a function declaration, staging it for taking
