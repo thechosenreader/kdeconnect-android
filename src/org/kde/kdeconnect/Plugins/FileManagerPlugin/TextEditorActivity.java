@@ -76,7 +76,7 @@ public class TextEditorActivity extends AppCompatActivity {
 
           off += addChunkSize;
         }
-        
+
         reportResult(strings);
       } catch (Exception e) {
           reportError(e);

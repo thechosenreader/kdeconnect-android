@@ -80,11 +80,7 @@ public class FileManagerActivity extends AppCompatActivity {
         FileEntry selectedItem = directoryItems.get(i);
 
         if (!selectedItem.isReadable()) {
-          new AlertDialog.Builder(FileManagerActivity.this)
-                  .setTitle(R.string.fm_permission_denied)
-                  .setMessage(R.string.fm_permission_denied_desc)
-                  .setPositiveButton(R.string.ok, null)
-                  .show();
+          permissionDenied();
         }
 
         else if (selectedItem.isDirectory()) {
@@ -108,6 +104,14 @@ public class FileManagerActivity extends AppCompatActivity {
       gotoLastPosition(plugin);
 
     }));
+  }
+
+  private void permissionDenied() {
+    new AlertDialog.Builder(FileManagerActivity.this)
+            .setTitle(R.string.fm_permission_denied)
+            .setMessage(R.string.fm_permission_denied_desc)
+            .setPositiveButton(R.string.ok, null)
+            .show();
   }
 
   @Override
@@ -188,12 +192,17 @@ public class FileManagerActivity extends AppCompatActivity {
     }
 
     else if (id == R.id.fm_view_as_text) {
-      final String cachePath = String.format("%s/%s", this.getCacheDir().getAbsolutePath(), RandomHelper.randomString(15));
-      Intent intent = new Intent(this, TextEditorActivity.class);
-      intent.putExtra("deviceId", deviceId);
-      intent.putExtra("targetFilePath", selectedItem.getAbsPath());
-      intent.putExtra("cacheFilePath", cachePath);
-      this.startActivity(intent);
+      if (selectedItem.isReadable()) {
+        final String cachePath = String.format("%s/%s", this.getCacheDir().getAbsolutePath(), RandomHelper.randomString(15));
+        Intent intent = new Intent(this, TextEditorActivity.class);
+        intent.putExtra("deviceId", deviceId);
+        intent.putExtra("targetFilePath", selectedItem.getAbsPath());
+        intent.putExtra("cacheFilePath", cachePath);
+        this.startActivity(intent);
+      } else {
+        permissionDenied();
+      }
+
     }
 
     else if (id == R.id.directory_download_zip) {
