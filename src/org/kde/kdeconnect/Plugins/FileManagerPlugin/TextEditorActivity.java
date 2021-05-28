@@ -1,6 +1,7 @@
 package org.kde.kdeconnect.Plugins.FileManagerPlugin;
 
 import android.content.Intent;
+import android.os.Build;
 import android.util.Log;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -10,6 +11,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import org.kde.kdeconnect.async.BackgroundJob;
@@ -20,20 +22,22 @@ import org.kde.kdeconnect_tp.databinding.ActivityTextEditorBinding;
 
 import java.io.File;
 // import java.nio.file.Files;
-// import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.io.FileReader;
 import java.io.BufferedReader;
 // import java.io.RandomAccessFile;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Objects;
 
 
 public class TextEditorActivity extends AppCompatActivity {
-  private String deviceId;
-  private String targetFilePath;
-  private String cacheFilePath;
+  private static String deviceId;
+  private static String targetFilePath;
+  private static String cacheFilePath;
 
   private boolean downReady = false;
   private boolean downError = false;
@@ -58,32 +62,21 @@ public class TextEditorActivity extends AppCompatActivity {
       this.pathToLoad = pathToLoad;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void run() {
       try {
-        File file = new File(pathToLoad);
-        // StringBuilder fileText = new StringBuilder((int) file.length());
-        BufferedReader br = new BufferedReader(new FileReader(file));
-        // String st;
+        /* this is probably less fast than BufferedReader but no where near enough to warrant
+        but its plenty fast enough, plus ive already thrown performance to the wind so who tf cares */
+        byte[] bytes = Files.readAllBytes(Paths.get(cacheFilePath));
         int off = 0;
-        char[] cbuf = new char[readChunkSize];
-        int r;
-        while ((r = br.read(cbuf, 0, readChunkSize)) != -1) {
-          Log.d("TextEditorActivity", "reading chunk #" + off / readChunkSize);
+        while (off < bytes.length) {
+          String chunk = new String(bytes, off, Math.min(addChunkSize, bytes.length - off));
+          strings.add(chunk);
 
-          for (int o = 0; o < readChunkSize; o += addChunkSize) {
-            String chunk = new String(cbuf, o, addChunkSize);
-            strings.add(chunk);
-          }
-
-          off += readChunkSize;
-          cbuf = new char[readChunkSize];
+          off += addChunkSize;
         }
-        // while ((st = br.readLine()) != null) {
-        //   fileText.append(st + "\n");
-        // }
-        br.close();
-        // String fileText = new String(Files.readAllBytes(Paths.get(cacheFilePath)));
+        
         reportResult(strings);
       } catch (Exception e) {
           reportError(e);
