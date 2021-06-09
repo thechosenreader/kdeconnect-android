@@ -11,6 +11,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.kde.kdeconnect.NetworkPacket;
 import org.kde.kdeconnect.Helpers.FilesHelper;
+import org.kde.kdeconnect.UserInterface.PluginSettingsFragment;
 import org.kde.kdeconnect.async.BackgroundJob;
 import org.kde.kdeconnect.async.BackgroundJobHandler;
 import org.kde.kdeconnect.Plugins.SharePlugin.CompositeReceiveFileJob;
@@ -490,4 +491,8 @@ public class FileManagerPlugin extends Plugin {
       return context.getString(R.string.pref_plugin_filemanager);
   }
 
+  @Override
+  public PluginSettingsFragment getSettingsFragment(Activity activity) {
+    return FileManagerSettingsFragment.newInstance(getPluginKey());
+  }
 }

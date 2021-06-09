@@ -180,23 +180,28 @@ public class TextEditorActivity extends AppCompatActivity {
   }
 
   private void init() {
-    if (deviceId == null) {
-      deviceId = getIntent().getStringExtra("deviceId");
-      BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
-        targetFilePath = getIntent().getStringExtra("targetFilePath");
-        cacheFilePath = getIntent().getStringExtra("cacheFilePath");
+    /* this used to be wrapped in an if-clause testing whether this.deviceId was null
+       that caused problems with the savedInstanceState in onCreate ultimately leading to updateView()
+       never being called, not even once. there are various other solutions to that specific problem,
+       but ive taken the tentative approach of just getting rid of the if-clause because it doesnt
+       make much sense to me anyway.
+     */
+    deviceId = getIntent().getStringExtra("deviceId");
+    BackgroundService.RunWithPlugin(this, deviceId, FileManagerPlugin.class, plugin -> {
+      targetFilePath = getIntent().getStringExtra("targetFilePath");
+      cacheFilePath = getIntent().getStringExtra("cacheFilePath");
 
-        if (plugin.isCached(targetFilePath)) {
-          cacheFilePath = plugin.getCachedPath(targetFilePath, "");
-          downReady = true;
-        } else {
-          plugin.setFileReceivedCallback(fileReceivedCallback);
-          plugin.requestDownloadForViewing(cacheFilePath, targetFilePath);
-        }
-        Log.d("TextEditorActivity", String.format("init with target = %s, cache = %s", targetFilePath, cacheFilePath));
-        updateView();
-      });
-    }
+      if (plugin.isCached(targetFilePath)) {
+        Log.d("TextEditorActivity", "plugin says " + targetFilePath + " is cached");
+        cacheFilePath = plugin.getCachedPath(targetFilePath, "");
+        downReady = true;
+      } else {
+        plugin.setFileReceivedCallback(fileReceivedCallback);
+        plugin.requestDownloadForViewing(cacheFilePath, targetFilePath);
+      }
+      Log.d("TextEditorActivity", String.format("init with target = %s, cache = %s", targetFilePath, cacheFilePath));
+      updateView();
+    });
   }
 
   @Override

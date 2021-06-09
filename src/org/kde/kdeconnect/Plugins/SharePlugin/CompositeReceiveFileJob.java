@@ -272,7 +272,6 @@ public class CompositeReceiveFileJob extends BackgroundJob<Device, Void> {
             displayName = filenameToUse;
         }
 
-        Log.d("POOPY", String.format("basename: %s\nmimetype: %s\ndisplayname: %s", FilenameUtils.getBaseName(filenameToUse), mimeType, displayName));
         DocumentFile fileDocument = destinationFolderDocument.createFile(mimeType, displayName);
 
         if (fileDocument == null) {
@@ -327,7 +326,11 @@ public class CompositeReceiveFileJob extends BackgroundJob<Device, Void> {
     }
 
     private void publishFile(DocumentFile fileDocument, long size) {
-        if (!ShareSettingsFragment.isCustomDestinationEnabled(getDevice().getContext())) {
+        /* if custom destination is not enabled or
+            file is intended for cache, do not add to downlaod manager
+         */
+        if (!(ShareSettingsFragment.isCustomDestinationEnabled(getDevice().getContext())
+                || fileDocument.getUri().getPath().startsWith(getDevice().getContext().getCacheDir().getAbsolutePath()))) {
             Log.i("SharePlugin", "Adding to downloads");
             DownloadManager manager = ContextCompat.getSystemService(getDevice().getContext(),
                     DownloadManager.class);
