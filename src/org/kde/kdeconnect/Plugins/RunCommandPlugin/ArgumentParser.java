@@ -152,11 +152,15 @@ public class ArgumentParser {
 	}
 
 	private static void replaceNamedArg(StringBuilder cmd, String passedArg, String namedArg) {
+		Log.d("ArgumentParser", String.format("replacing %s with %s", namedArg, passedArg));
 		Pattern p = Pattern.compile(namedArgDeclaration + namedArg, Pattern.LITERAL);
 		// do not wrap supplied value in quotes if argument name starts with _
 		String format = (namedArg.startsWith("_")) ? "%s" : "\"%s\"";
+
 		cmd.replace(0, cmd.length(),
-			p.matcher(cmd.toString()).replaceAll(String.format(format, passedArg)));
+			p.matcher(cmd.toString()).replaceAll(String.format(format, Matcher.quoteReplacement(passedArg))));
+
+		Log.d("ArgumentParser", "cmd is now " + cmd.toString());
 	}
 
 	// wrap a given command in a function declaration, staging it for taking
@@ -188,10 +192,7 @@ public class ArgumentParser {
 						if (passedNamedArg.equals("")) {
 							passedNamedArg = t.getDefaultValue();
 						}
-						Log.d("ArgumentParser", String.format("replacing %s with %s", namedArg, passedNamedArg));
 						replaceNamedArg(sb, passedNamedArg, namedArg);
-						Log.d("ArgumentParser", "cmd is now " + sb.toString());
-
 					}
 
 					final String passedPosArgs = argBinding.posArgs.getText().toString();
