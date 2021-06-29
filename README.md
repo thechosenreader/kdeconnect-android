@@ -6,7 +6,6 @@ Here you can find a high level overview of the changes I've made and the feature
 
 ## Features
 - **Arguments in Run Command**
-    * commands can be run with positional arguments, e.g `echo $1 $2`
     * commands can be run with named arguments, e.g `echo $$msg`
     * named arguments can be given default values e.g `echo $$msg="hi"`
     * go to ARGS.md to learn more

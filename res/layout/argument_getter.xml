@@ -27,13 +27,6 @@
         android:orientation="vertical"
         android:id="@+id/arg_layout">
 
-        <EditText
-             android:id="@+id/pos_args"
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:hint = "@string/rc_pos_args_hint"
-             android:inputType="text"/>
-
         <!-- children are EditTexts that will be added programmatically -->
 
     </LinearLayout>

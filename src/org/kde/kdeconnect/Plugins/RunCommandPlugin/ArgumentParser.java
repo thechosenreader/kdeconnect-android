@@ -22,15 +22,10 @@ import org.kde.kdeconnect_tp.databinding.ArgumentGetterBinding;
 import org.kde.kdeconnect_tp.R;
 
 public class ArgumentParser {
-	// yes, this will not match all of the positional arguments. its fine, the function getArgs is not used meaningfully
-	// private static final Pattern posArgPattern = Pattern.compile("(\\$(?<idx>[0-9]))|(\\$\\{(?<idx>[0-9]+)\\})");
-	private static final Pattern posArgPattern = Pattern.compile("(\\$(?<idx>[0-9]))");
-	private static final Pattern hasPosArgsPattern = Pattern.compile("(.*\\$[0-9].*)|(.*\\$\\{[0-9]+\\}.*)");
-
 	// the below regex is complicated by java
 	// without weird escaping: \$\$(?<name>[a-zA-Z_][_a-zA-Z0-9]*)(="(?<default>.*?)(?<![\\])")?
-	private static final Pattern namedArgPattern = Pattern.compile("\\$\\$(?<name>[a-zA-Z_][_a-zA-Z0-9]*)(?<notname>=\"(?<default>.*?)(?<![\\\\])\")?");
-	private static final Pattern hasNamedArgsPattern = Pattern.compile("(.*\\$\\$[a-zA-Z_][_a-zA-Z0-9]*.*)");
+	private static final Pattern namedArgPattern = Pattern.compile("\\$\\$(?<name>[0-9a-zA-Z_][_a-zA-Z0-9]*)(?<notname>=\"(?<default>.*?)(?<![\\\\])\")?");
+	private static final Pattern hasNamedArgsPattern = Pattern.compile("(.*\\$\\$[0-9a-zA-Z_][_a-zA-Z0-9]*.*)");
 	private static final String namedArgDeclaration = "$$";
 
 	private ArgumentGetterBinding argBinding;
@@ -42,21 +37,6 @@ public class ArgumentParser {
 	private Runnable callback;
 
 	private final HashMap<String, String> argsToDefaultMap = new HashMap<>();
-
-	// run command with passed arguments
-	final static class CommandRunner {
-		public void runCommand(final RunCommandPlugin plugin, final String cmdKey, final String cmd, final String passedArgs) {
-			String[] args = passedArgs.split("\n");
-			String argString = "";
-			for (String a : args) {
-				argString += "\"" + a + "\" ";
-			}
-
-			final String finalCmd = wrapAsFunction(cmd) + argString;
-			Log.d("RunCommand", "running " + finalCmd);
-			plugin.runCommand(cmdKey, finalCmd);
-		}
-	}
 
 	final static class EditTextWithArgName extends EditText {
 		String argname;
@@ -92,11 +72,8 @@ public class ArgumentParser {
 		this.callback = callback;
 
 		argBinding = ArgumentGetterBinding.inflate(LayoutInflater.from(enclosingContext));
-		argBinding.argLayout.removeViews(1, argBinding.argLayout.getChildCount() - 1);
-
-		if (!hasPosArgs(cmd)) {
-			argBinding.posArgs.setVisibility(View.GONE);
-		}
+		if (argBinding.argLayout.getChildCount() > 0)
+			argBinding.argLayout.removeViews(0, argBinding.argLayout.getChildCount() - 1);
 
 		argsToDefaultMap.clear();
 		argBinding.dialogMessage.setText(cmd);
@@ -139,16 +116,8 @@ public class ArgumentParser {
 
 	}
 
-	private static boolean hasPosArgs(String cmd) {
-		return hasPosArgsPattern.matcher(cmd).matches();
-	}
-
-	private static boolean hasNamedArgs(String cmd) {
-		return hasNamedArgsPattern.matcher(cmd).matches();
-	}
-
 	public static boolean hasArguments(String cmd) {
-		return hasPosArgs(cmd) || hasNamedArgs(cmd);
+		return hasNamedArgsPattern.matcher(cmd).matches();
 	}
 
 	private static void replaceNamedArg(StringBuilder cmd, String passedArg, String namedArg) {
@@ -163,18 +132,6 @@ public class ArgumentParser {
 		Log.d("ArgumentParser", "cmd is now " + cmd.toString());
 	}
 
-	// wrap a given command in a function declaration, staging it for taking
-	// user supplied arguments
-	// eg. "echo $1"  ->  "kdsakjsad() { echo $1; }; kdsakjsad "
-	public static String wrapAsFunction(String cmd) {
-		String funcName = RandomHelper.randomStringCharOnly(15);
-
-		if (!cmd.endsWith(";"))
-			cmd += ";";
-
-		return String.format("%s() { %s }; %s ", funcName, cmd, funcName);
-	}
-
 	public void getAndRunWithArgs() {
 		// Log.d("ArgumentParser", "argLayout child count " + argBinding.argLayout.getChildCount());
 
@@ -185,19 +142,17 @@ public class ArgumentParser {
 			.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					for (int idx=1; idx < argBinding.argLayout.getChildCount(); idx++) {
+					for (int idx=0; idx < argBinding.argLayout.getChildCount(); idx++) {
 						EditTextWithArgName t = ((EditTextWithArgName) argBinding.argLayout.getChildAt(idx));
 						final String namedArg = t.getArgNameWithoutDefault();
 						String passedNamedArg = t.getText().toString();
 						if (passedNamedArg.equals("")) {
 							passedNamedArg = t.getDefaultValue();
 						}
+						Log.d("ArgumentParser", "replacing " + namedArg + " with " + passedNamedArg);
 						replaceNamedArg(sb, passedNamedArg, namedArg);
 					}
-
-					final String passedPosArgs = argBinding.posArgs.getText().toString();
-					new CommandRunner().runCommand(ArgumentParser.this.plugin, ArgumentParser.this.cmdKey, sb.toString(), passedPosArgs);
-
+					ArgumentParser.this.plugin.runCommand(ArgumentParser.this.cmdKey, sb.toString());
 					dialog.dismiss();
 					if (ArgumentParser.this.callback != null) {
 						ArgumentParser.this.callback.run();
